@@ -12,18 +12,7 @@ import { UserManagementTable } from "./components/user-management-table";
 import { MaterialManagementTable } from "./components/material-management-table";
 import { notFound } from "next/navigation";
 import { getServerSession } from "@/lib/get-session";
-
-// Mock global statistics (ORM-ready: aggregate queries on User, Material, Download tables)
-const globalStats = {
-	totalUsers: 1247,
-	totalMaterials: 3891,
-	totalDownloads: 15634,
-	pendingApprovals: 23,
-	activeUsers: 892,
-	newUsersThisMonth: 156,
-	materialsThisMonth: 234,
-	downloadsThisMonth: 4521,
-};
+import { getAdminStats } from "./actions";
 
 export default async function AdminPage() {
 	const session = await getServerSession();
@@ -31,6 +20,20 @@ export default async function AdminPage() {
 	if (session?.user.role !== "admin") {
 		return notFound();
 	}
+
+	const statsResult = await getAdminStats();
+	const globalStats =
+		statsResult.success && statsResult.data
+			? statsResult.data
+			: {
+					totalUsers: 0,
+					totalMaterials: 0,
+					totalDownloads: 0,
+					pendingApprovals: 0,
+					newUsersThisMonth: 0,
+					materialsThisMonth: 0,
+					downloadsThisMonth: 0,
+			  };
 
 	return (
 		<div className="container mx-auto px-6 pt-24 pb-12">
@@ -44,6 +47,23 @@ export default async function AdminPage() {
 
 			{/* Global Statistics */}
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+				<Card className="border-primary">
+					<CardHeader className="flex flex-row items-center justify-between pb-2">
+						<CardTitle className="text-sm font-medium">
+							Pending Approvals
+						</CardTitle>
+						<Clock className="h-4 w-4 text-primary" />
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold text-primary">
+							{globalStats.pendingApprovals}
+						</div>
+						<p className="text-xs text-muted-foreground mt-1">
+							Requires attention
+						</p>
+					</CardContent>
+				</Card>
+
 				<Card>
 					<CardHeader className="flex flex-row items-center justify-between pb-2">
 						<CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -98,23 +118,6 @@ export default async function AdminPage() {
 								+{globalStats.downloadsThisMonth}
 							</span>{" "}
 							this month
-						</p>
-					</CardContent>
-				</Card>
-
-				<Card className="border-primary">
-					<CardHeader className="flex flex-row items-center justify-between pb-2">
-						<CardTitle className="text-sm font-medium">
-							Pending Approvals
-						</CardTitle>
-						<Clock className="h-4 w-4 text-primary" />
-					</CardHeader>
-					<CardContent>
-						<div className="text-2xl font-bold text-primary">
-							{globalStats.pendingApprovals}
-						</div>
-						<p className="text-xs text-muted-foreground mt-1">
-							Requires attention
 						</p>
 					</CardContent>
 				</Card>

@@ -3,6 +3,9 @@
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { revalidatePath } from "next/cache"
+import { prisma } from "@/lib/prisma"
+import { MaterialStatus, Category } from "@prisma/client"
+import { getServerSession } from "@/lib/get-session"
 
 /**
  * List users with optional filtering, searching, sorting, and pagination
@@ -269,6 +272,376 @@ export async function revokeUserSessions(params: { userId: string }) {
         return {
             success: false,
             error: error instanceof Error ? error.message : "Failed to revoke sessions",
+        }
+    }
+}
+
+/**
+ * Get pending materials for approval
+ */
+export async function getPendingMaterials() {
+    try {
+        const session = await getServerSession()
+
+        if (!session?.user || session.user.role !== "admin") {
+            return {
+                success: false,
+                error: "Unauthorized",
+            }
+        }
+
+        const materials = await prisma.material.findMany({
+            where: {
+                status: MaterialStatus.PENDING,
+            },
+            include: {
+                uploader: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        })
+
+        return {
+            success: true,
+            data: materials,
+        }
+    } catch (error) {
+        console.error("Error fetching pending materials:", error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to fetch pending materials",
+        }
+    }
+}
+
+/**
+ * Approve a material
+ */
+export async function approveMaterial(materialId: string) {
+    try {
+        const session = await getServerSession()
+
+        if (!session?.user || session.user.role !== "admin") {
+            return {
+                success: false,
+                error: "Unauthorized",
+            }
+        }
+
+        const material = await prisma.material.update({
+            where: {
+                id: materialId,
+            },
+            data: {
+                status: MaterialStatus.APPROVED,
+                approvedAt: new Date(),
+            },
+        })
+
+        revalidatePath("/admin")
+        revalidatePath("/library")
+
+        return {
+            success: true,
+            message: "Material approved successfully",
+            data: material,
+        }
+    } catch (error) {
+        console.error("Error approving material:", error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to approve material",
+        }
+    }
+}
+
+/**
+ * Reject a material
+ */
+export async function rejectMaterial(materialId: string) {
+    try {
+        const session = await getServerSession()
+
+        if (!session?.user || session.user.role !== "admin") {
+            return {
+                success: false,
+                error: "Unauthorized",
+            }
+        }
+
+        const material = await prisma.material.update({
+            where: {
+                id: materialId,
+            },
+            data: {
+                status: MaterialStatus.REJECTED,
+            },
+        })
+
+        revalidatePath("/admin")
+
+        return {
+            success: true,
+            message: "Material rejected successfully",
+            data: material,
+        }
+    } catch (error) {
+        console.error("Error rejecting material:", error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to reject material",
+        }
+    }
+}
+
+/**
+ * Get all approved materials with optional filtering and pagination
+ */
+export async function getApprovedMaterials(params?: {
+    searchQuery?: string
+    category?: Category
+    limit?: number
+    offset?: number
+}) {
+    try {
+        const session = await getServerSession()
+
+        if (!session?.user || session.user.role !== "admin") {
+            return {
+                success: false,
+                error: "Unauthorized",
+            }
+        }
+
+        const where = {
+            status: MaterialStatus.APPROVED,
+            ...(params?.category && { category: params.category }),
+            ...(params?.searchQuery && {
+                OR: [
+                    { title: { contains: params.searchQuery, mode: "insensitive" as const } },
+                    { description: { contains: params.searchQuery, mode: "insensitive" as const } },
+                ],
+            }),
+        }
+
+        const [materials, total] = await Promise.all([
+            prisma.material.findMany({
+                where,
+                include: {
+                    uploader: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    createdAt: "desc",
+                },
+                take: params?.limit || 50,
+                skip: params?.offset || 0,
+            }),
+            prisma.material.count({ where }),
+        ])
+
+        return {
+            success: true,
+            data: {
+                materials,
+                total,
+            },
+        }
+    } catch (error) {
+        console.error("Error fetching approved materials:", error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to fetch materials",
+        }
+    }
+}
+
+/**
+ * Delete a material (soft delete by setting status to REJECTED or hard delete)
+ */
+export async function deleteMaterial(materialId: string, hardDelete = false) {
+    try {
+        const session = await getServerSession()
+
+        if (!session?.user || session.user.role !== "admin") {
+            return {
+                success: false,
+                error: "Unauthorized",
+            }
+        }
+
+        if (hardDelete) {
+            // Hard delete - permanently remove from database
+            await prisma.material.delete({
+                where: {
+                    id: materialId,
+                },
+            })
+        } else {
+            // Soft delete - just reject the material
+            await prisma.material.update({
+                where: {
+                    id: materialId,
+                },
+                data: {
+                    status: MaterialStatus.REJECTED,
+                },
+            })
+        }
+
+        revalidatePath("/admin")
+        revalidatePath("/library")
+
+        return {
+            success: true,
+            message: hardDelete ? "Material permanently deleted" : "Material removed from library",
+        }
+    } catch (error) {
+        console.error("Error deleting material:", error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to delete material",
+        }
+    }
+}
+
+/**
+ * Get admin dashboard statistics
+ */
+export async function getAdminStats() {
+    try {
+        const session = await getServerSession()
+
+        if (!session?.user || session.user.role !== "admin") {
+            return {
+                success: false,
+                error: "Unauthorized",
+            }
+        }
+
+        const now = new Date()
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+        const [
+            totalUsers,
+            totalMaterials,
+            totalDownloads,
+            pendingApprovals,
+            newUsersThisMonth,
+            materialsThisMonth,
+            downloadsThisMonth,
+        ] = await Promise.all([
+            prisma.user.count(),
+            prisma.material.count({
+                where: { status: MaterialStatus.APPROVED },
+            }),
+            prisma.download.count(),
+            prisma.material.count({
+                where: { status: MaterialStatus.PENDING },
+            }),
+            prisma.user.count({
+                where: {
+                    createdAt: {
+                        gte: startOfMonth,
+                    },
+                },
+            }),
+            prisma.material.count({
+                where: {
+                    status: MaterialStatus.APPROVED,
+                    createdAt: {
+                        gte: startOfMonth,
+                    },
+                },
+            }),
+            prisma.download.count({
+                where: {
+                    downloadedAt: {
+                        gte: startOfMonth,
+                    },
+                },
+            }),
+        ])
+
+        return {
+            success: true,
+            data: {
+                totalUsers,
+                totalMaterials,
+                totalDownloads,
+                pendingApprovals,
+                newUsersThisMonth,
+                materialsThisMonth,
+                downloadsThisMonth,
+            },
+        }
+    } catch (error) {
+        console.error("Error fetching admin stats:", error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to fetch statistics",
+        }
+    }
+}
+
+/**
+ * Get material by ID (for preview in admin)
+ */
+export async function getMaterialById(materialId: string) {
+    try {
+        const session = await getServerSession()
+
+        if (!session?.user || session.user.role !== "admin") {
+            return {
+                success: false,
+                error: "Unauthorized",
+            }
+        }
+
+        const material = await prisma.material.findUnique({
+            where: {
+                id: materialId,
+            },
+            include: {
+                uploader: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        image: true,
+                    },
+                },
+            },
+        })
+
+        if (!material) {
+            return {
+                success: false,
+                error: "Material not found",
+            }
+        }
+
+        return {
+            success: true,
+            data: material,
+        }
+    } catch (error) {
+        console.error("Error fetching material:", error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to fetch material",
         }
     }
 }

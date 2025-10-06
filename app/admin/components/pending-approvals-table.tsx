@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -19,81 +19,84 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Check, X, Eye, FileText, ImageIcon } from "lucide-react";
+import { Check, X, Eye, FileText, ImageIcon, Loader2 } from "lucide-react";
+import {
+	getPendingMaterials,
+	approveMaterial,
+	rejectMaterial,
+} from "../actions";
+import { toast } from "sonner";
+import type { Material, User } from "@prisma/client";
 
-// Mock pending materials (ORM-ready: Material table with status='pending')
-const mockPendingMaterials = [
-	{
-		id: "1",
-		title: "Introduction to Quantum Mechanics",
-		description: "Comprehensive guide to quantum physics fundamentals",
-		category: "Science",
-		subcategories: ["Physics", "Quantum Theory"],
-		fileType: "pdf",
-		uploaderId: "user-1",
-		uploaderName: "Dr. Sarah Chen",
-		uploaderEmail: "sarah.chen@university.edu",
-		createdAt: "2024-01-15T10:30:00Z",
-	},
-	{
-		id: "2",
-		title: "Renaissance Art Techniques",
-		description: "Study of painting methods from the Renaissance period",
-		category: "Arts",
-		subcategories: ["Art History", "Painting"],
-		fileType: "pdf",
-		uploaderId: "user-2",
-		uploaderName: "Prof. Michael Torres",
-		uploaderEmail: "mtorres@artschool.edu",
-		createdAt: "2024-01-15T09:15:00Z",
-	},
-	{
-		id: "3",
-		title: "Calculus Problem Set",
-		description: "Advanced calculus exercises with solutions",
-		category: "Mathematics",
-		subcategories: ["Calculus", "Problem Sets"],
-		fileType: "pdf",
-		uploaderId: "user-3",
-		uploaderName: "Emma Wilson",
-		uploaderEmail: "emma.w@student.edu",
-		createdAt: "2024-01-15T08:45:00Z",
-	},
-];
+type MaterialWithUploader = Material & {
+	uploader: Pick<User, "id" | "name" | "email">;
+};
 
 const categoryColors = {
-	Science: "bg-green-500",
-	Technology: "bg-blue-500",
-	Engineering: "bg-orange-500",
-	Arts: "bg-purple-500",
-	Mathematics: "bg-red-500",
+	SCIENCE: "bg-green-500",
+	TECHNOLOGY: "bg-blue-500",
+	ENGINEERING: "bg-orange-500",
+	ARTS: "bg-purple-500",
+	MATHEMATICS: "bg-red-500",
 };
 
 export function PendingApprovalsTable() {
-	const [materials, setMaterials] = useState(mockPendingMaterials);
-	const [selectedMaterial, setSelectedMaterial] = useState<
-		(typeof mockPendingMaterials)[0] | null
-	>(null);
+	const [materials, setMaterials] = useState<MaterialWithUploader[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [selectedMaterial, setSelectedMaterial] =
+		useState<MaterialWithUploader | null>(null);
 	const [actionDialog, setActionDialog] = useState<"approve" | "reject" | null>(
 		null
 	);
+	const [actionLoading, setActionLoading] = useState(false);
 
-	const handleApprove = (id: string) => {
-		// ORM-ready: UPDATE Material SET status='approved' WHERE id=?
-		setMaterials(materials.filter((m) => m.id !== id));
-		setActionDialog(null);
-		setSelectedMaterial(null);
+	const loadMaterials = async () => {
+		setLoading(true);
+		const result = await getPendingMaterials();
+		if (result.success && result.data) {
+			setMaterials(result.data);
+		} else {
+			toast.error("Failed to load pending materials");
+		}
+		setLoading(false);
 	};
 
-	const handleReject = (id: string) => {
-		// ORM-ready: UPDATE Material SET status='rejected' WHERE id=?
-		setMaterials(materials.filter((m) => m.id !== id));
-		setActionDialog(null);
-		setSelectedMaterial(null);
+	useEffect(() => {
+		loadMaterials();
+	}, []);
+
+	const handleApprove = async (id: string) => {
+		setActionLoading(true);
+		const result = await approveMaterial(id);
+
+		if (result.success) {
+			toast.success("Material approved successfully");
+			setMaterials(materials.filter((m) => m.id !== id));
+			setActionDialog(null);
+			setSelectedMaterial(null);
+		} else {
+			toast.error(result.error || "Failed to approve material");
+		}
+		setActionLoading(false);
 	};
 
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString("en-US", {
+	const handleReject = async (id: string) => {
+		setActionLoading(true);
+		const result = await rejectMaterial(id);
+
+		if (result.success) {
+			toast.success("Material rejected");
+			setMaterials(materials.filter((m) => m.id !== id));
+			setActionDialog(null);
+			setSelectedMaterial(null);
+		} else {
+			toast.error(result.error || "Failed to reject material");
+		}
+		setActionLoading(false);
+	};
+
+	const formatDate = (date: Date) => {
+		return new Date(date).toLocaleDateString("en-US", {
 			month: "short",
 			day: "numeric",
 			year: "numeric",
@@ -101,6 +104,14 @@ export function PendingApprovalsTable() {
 			minute: "2-digit",
 		});
 	};
+
+	if (loading) {
+		return (
+			<div className="flex items-center justify-center py-8">
+				<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+			</div>
+		);
+	}
 
 	return (
 		<>
@@ -131,7 +142,7 @@ export function PendingApprovalsTable() {
 									<TableCell>
 										<div className="flex items-start gap-3">
 											<div className="mt-1">
-												{material.fileType === "pdf" ? (
+												{material.fileType.includes("pdf") ? (
 													<FileText className="h-5 w-5 text-muted-foreground" />
 												) : (
 													<ImageIcon className="h-5 w-5 text-muted-foreground" />
@@ -143,13 +154,13 @@ export function PendingApprovalsTable() {
 													{material.description}
 												</div>
 												<div className="flex flex-wrap gap-1 mt-1">
-													{material.subcategories.map((sub) => (
+													{material.keywords.map((keyword) => (
 														<Badge
-															key={sub}
+															key={keyword}
 															variant="secondary"
 															className="text-xs"
 														>
-															{sub}
+															{keyword}
 														</Badge>
 													))}
 												</div>
@@ -169,9 +180,11 @@ export function PendingApprovalsTable() {
 									</TableCell>
 									<TableCell>
 										<div>
-											<div className="font-medium">{material.uploaderName}</div>
+											<div className="font-medium">
+												{material.uploader.name}
+											</div>
 											<div className="text-sm text-muted-foreground">
-												{material.uploaderEmail}
+												{material.uploader.email}
 											</div>
 										</div>
 									</TableCell>
@@ -233,14 +246,22 @@ export function PendingApprovalsTable() {
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
-						<Button variant="outline" onClick={() => setActionDialog(null)}>
+						<Button
+							variant="outline"
+							onClick={() => setActionDialog(null)}
+							disabled={actionLoading}
+						>
 							Cancel
 						</Button>
 						<Button
 							onClick={() =>
 								selectedMaterial && handleApprove(selectedMaterial.id)
 							}
+							disabled={actionLoading}
 						>
+							{actionLoading && (
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							)}
 							Approve Material
 						</Button>
 					</DialogFooter>
@@ -262,7 +283,11 @@ export function PendingApprovalsTable() {
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
-						<Button variant="outline" onClick={() => setActionDialog(null)}>
+						<Button
+							variant="outline"
+							onClick={() => setActionDialog(null)}
+							disabled={actionLoading}
+						>
 							Cancel
 						</Button>
 						<Button
@@ -270,7 +295,11 @@ export function PendingApprovalsTable() {
 							onClick={() =>
 								selectedMaterial && handleReject(selectedMaterial.id)
 							}
+							disabled={actionLoading}
 						>
+							{actionLoading && (
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							)}
 							Reject Material
 						</Button>
 					</DialogFooter>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -20,96 +20,91 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Trash2, FileText, ImageIcon, Eye } from "lucide-react";
+import { Search, Trash2, FileText, ImageIcon, Loader2 } from "lucide-react";
+import { getApprovedMaterials, deleteMaterial } from "../actions";
+import { toast } from "sonner";
+import type { Material, User } from "@prisma/client";
 
-// Mock approved materials (ORM-ready: Material table with status='approved')
-const mockMaterials = [
-	{
-		id: "1",
-		title: "Introduction to Machine Learning",
-		category: "Technology",
-		fileType: "pdf",
-		uploaderId: "user-1",
-		uploaderName: "Dr. Sarah Chen",
-		downloadCount: 234,
-		viewCount: 567,
-		createdAt: "2023-12-10T10:30:00Z",
-	},
-	{
-		id: "2",
-		title: "Organic Chemistry Fundamentals",
-		category: "Science",
-		fileType: "pdf",
-		uploaderId: "user-2",
-		uploaderName: "Prof. Michael Torres",
-		downloadCount: 189,
-		viewCount: 423,
-		createdAt: "2023-12-15T14:20:00Z",
-	},
-	{
-		id: "3",
-		title: "Renaissance Art History",
-		category: "Arts",
-		fileType: "pdf",
-		uploaderId: "user-3",
-		uploaderName: "Emma Wilson",
-		downloadCount: 156,
-		viewCount: 389,
-		createdAt: "2024-01-05T09:15:00Z",
-	},
-	{
-		id: "4",
-		title: "Linear Algebra Textbook",
-		category: "Mathematics",
-		fileType: "pdf",
-		uploaderId: "user-4",
-		uploaderName: "James Rodriguez",
-		downloadCount: 312,
-		viewCount: 678,
-		createdAt: "2023-11-20T16:45:00Z",
-	},
-];
+type MaterialWithUploader = Material & {
+	uploader: Pick<User, "id" | "name" | "email">;
+};
 
 const categoryColors = {
-	Science: "bg-green-500",
-	Technology: "bg-blue-500",
-	Engineering: "bg-orange-500",
-	Arts: "bg-purple-500",
-	Mathematics: "bg-red-500",
+	SCIENCE: "bg-green-500",
+	TECHNOLOGY: "bg-blue-500",
+	ENGINEERING: "bg-orange-500",
+	ARTS: "bg-purple-500",
+	MATHEMATICS: "bg-red-500",
 };
 
 export function MaterialManagementTable() {
-	const [materials, setMaterials] = useState(mockMaterials);
+	const [materials, setMaterials] = useState<MaterialWithUploader[]>([]);
+	const [loading, setLoading] = useState(true);
 	const [searchQuery, setSearchQuery] = useState("");
-	const [selectedMaterial, setSelectedMaterial] = useState<
-		(typeof mockMaterials)[0] | null
-	>(null);
+	const [selectedMaterial, setSelectedMaterial] =
+		useState<MaterialWithUploader | null>(null);
 	const [deleteDialog, setDeleteDialog] = useState(false);
+	const [deleteLoading, setDeleteLoading] = useState(false);
 
-	const handleDeleteMaterial = (materialId: string) => {
-		// ORM-ready: DELETE FROM Material WHERE id=?
-		setMaterials(materials.filter((m) => m.id !== materialId));
-		setDeleteDialog(false);
-		setSelectedMaterial(null);
+	const loadMaterials = async (search?: string) => {
+		setLoading(true);
+		const result = await getApprovedMaterials({
+			searchQuery: search,
+			limit: 100,
+		});
+
+		if (result.success && result.data) {
+			setMaterials(result.data.materials);
+		} else {
+			toast.error("Failed to load materials");
+		}
+		setLoading(false);
 	};
 
-	const filteredMaterials = materials.filter((material) =>
-		material.title.toLowerCase().includes(searchQuery.toLowerCase())
-	);
+	useEffect(() => {
+		loadMaterials();
+	}, []);
 
-	const formatDate = (dateString: string) => {
-		return new Date(dateString).toLocaleDateString("en-US", {
+	const handleSearch = (e: React.FormEvent) => {
+		e.preventDefault();
+		loadMaterials(searchQuery);
+	};
+
+	const handleDeleteMaterial = async (materialId: string) => {
+		setDeleteLoading(true);
+		const result = await deleteMaterial(materialId, false);
+
+		if (result.success) {
+			toast.success("Material removed from library");
+			setMaterials(materials.filter((m) => m.id !== materialId));
+			setDeleteDialog(false);
+			setSelectedMaterial(null);
+		} else {
+			toast.error(result.error || "Failed to delete material");
+		}
+		setDeleteLoading(false);
+	};
+
+	const formatDate = (date: Date) => {
+		return new Date(date).toLocaleDateString("en-US", {
 			month: "short",
 			day: "numeric",
 			year: "numeric",
 		});
 	};
 
+	if (loading) {
+		return (
+			<div className="flex items-center justify-center py-8">
+				<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+			</div>
+		);
+	}
+
 	return (
 		<>
 			<div className="space-y-4">
-				{/* Search */}
-				<div className="relative">
+				<form onSubmit={handleSearch} className="relative">
 					<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 					<Input
 						placeholder="Search materials by title..."
@@ -117,9 +112,8 @@ export function MaterialManagementTable() {
 						onChange={(e) => setSearchQuery(e.target.value)}
 						className="pl-9"
 					/>
-				</div>
+				</form>
 
-				{/* Table */}
 				<div className="rounded-md border">
 					<Table>
 						<TableHeader>
@@ -134,7 +128,7 @@ export function MaterialManagementTable() {
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{filteredMaterials.length === 0 ? (
+							{materials.length === 0 ? (
 								<TableRow>
 									<TableCell
 										colSpan={7}
@@ -144,15 +138,17 @@ export function MaterialManagementTable() {
 									</TableCell>
 								</TableRow>
 							) : (
-								filteredMaterials.map((material) => (
+								materials.map((material) => (
 									<TableRow key={material.id}>
 										<TableCell>
 											<div className="flex items-center gap-3">
-												{material.fileType === "pdf" ? (
-													<FileText className="h-5 w-5 text-muted-foreground" />
-												) : (
-													<ImageIcon className="h-5 w-5 text-muted-foreground" />
-												)}
+												<div>
+													{material.fileType.includes("pdf") ? (
+														<FileText className="h-5 w-5 text-muted-foreground" />
+													) : (
+														<ImageIcon className="h-5 w-5 text-muted-foreground" />
+													)}
+												</div>
 												<div className="font-medium">{material.title}</div>
 											</div>
 										</TableCell>
@@ -167,35 +163,32 @@ export function MaterialManagementTable() {
 												{material.category}
 											</Badge>
 										</TableCell>
-										<TableCell className="text-sm">
-											{material.uploaderName}
+										<TableCell>
+											<div className="text-sm">{material.uploader.name}</div>
 										</TableCell>
-										<TableCell className="text-center font-medium">
+										<TableCell className="text-center">
 											{material.downloadCount}
 										</TableCell>
-										<TableCell className="text-center font-medium">
+										<TableCell className="text-center">
 											{material.viewCount}
 										</TableCell>
 										<TableCell className="text-sm text-muted-foreground">
-											{formatDate(material.createdAt)}
+											{material.approvedAt
+												? formatDate(material.approvedAt)
+												: "N/A"}
 										</TableCell>
 										<TableCell className="text-right">
-											<div className="flex justify-end gap-2">
-												<Button size="sm" variant="outline">
-													<Eye className="h-4 w-4" />
-												</Button>
-												<Button
-													size="sm"
-													variant="outline"
-													className="text-red-600 hover:text-red-700 bg-transparent"
-													onClick={() => {
-														setSelectedMaterial(material);
-														setDeleteDialog(true);
-													}}
-												>
-													<Trash2 className="h-4 w-4" />
-												</Button>
-											</div>
+											<Button
+												size="sm"
+												variant="outline"
+												className="text-red-600 hover:text-red-700"
+												onClick={() => {
+													setSelectedMaterial(material);
+													setDeleteDialog(true);
+												}}
+											>
+												<Trash2 className="h-4 w-4" />
+											</Button>
 										</TableCell>
 									</TableRow>
 								))
@@ -205,19 +198,22 @@ export function MaterialManagementTable() {
 				</div>
 			</div>
 
-			{/* Delete Dialog */}
 			<Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Delete Material</DialogTitle>
+						<DialogTitle>Remove Material</DialogTitle>
 						<DialogDescription>
-							Are you sure you want to delete &quot;{selectedMaterial?.title}
-							&quot;? This action cannot be undone and the material will be
-							permanently removed from the library.
+							Are you sure you want to remove &quot;{selectedMaterial?.title}
+							&quot; from the library? This will set the material status to
+							rejected and hide it from users.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
-						<Button variant="outline" onClick={() => setDeleteDialog(false)}>
+						<Button
+							variant="outline"
+							onClick={() => setDeleteDialog(false)}
+							disabled={deleteLoading}
+						>
 							Cancel
 						</Button>
 						<Button
@@ -225,8 +221,12 @@ export function MaterialManagementTable() {
 							onClick={() =>
 								selectedMaterial && handleDeleteMaterial(selectedMaterial.id)
 							}
+							disabled={deleteLoading}
 						>
-							Delete Material
+							{deleteLoading && (
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							)}
+							Remove Material
 						</Button>
 					</DialogFooter>
 				</DialogContent>

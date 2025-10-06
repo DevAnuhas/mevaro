@@ -22,10 +22,11 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Ban, Shield, User, Loader2, AlertCircle } from "lucide-react";
+import { Search, Ban, Shield, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { listUsers, banUser, unbanUser } from "../actions";
 import { User as UserType } from "@/lib/auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function UserManagementTable() {
 	const [users, setUsers] = useState<UserType[]>([]);
@@ -180,9 +181,18 @@ export function UserManagementTable() {
 									<TableRow key={user.id}>
 										<TableCell>
 											<div className="flex items-center gap-3">
-												<div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
-													<User className="h-5 w-5 text-primary-foreground" />
-												</div>
+												<Avatar className="h-10 w-10">
+													<AvatarImage
+														src={user.image || "/placeholder.svg"}
+														alt={user.name}
+													/>
+													<AvatarFallback className="text-lg bg-primary text-primary-foreground">
+														{user.name
+															.split(" ")
+															.map((n: string) => n[0])
+															.join("")}
+													</AvatarFallback>
+												</Avatar>
 												<div>
 													<div className="font-medium">{user.name}</div>
 													<div className="text-sm text-muted-foreground">
