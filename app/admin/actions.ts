@@ -55,6 +55,80 @@ export async function listUsers(params?: {
 }
 
 /**
+ * Get user statistics (uploads and downloads count)
+ */
+export async function getUserStatistics(userIds: string[]) {
+    try {
+        const session = await getServerSession()
+
+        if (!session?.user || session.user.role !== "admin") {
+            return {
+                success: false,
+                error: "Unauthorized",
+            }
+        }
+
+        // Get upload counts (materials uploaded by each user)
+        const uploadCounts = await prisma.material.groupBy({
+            by: ['uploaderId'],
+            where: {
+                uploaderId: {
+                    in: userIds,
+                },
+            },
+            _count: {
+                id: true,
+            },
+        })
+
+        // Get download counts (downloads made by each user)
+        const downloadCounts = await prisma.download.groupBy({
+            by: ['userId'],
+            where: {
+                userId: {
+                    in: userIds,
+                },
+            },
+            _count: {
+                id: true,
+            },
+        })
+
+        // Transform to a more usable format
+        const statistics: Record<string, { uploads: number; downloads: number }> = {}
+
+        userIds.forEach(userId => {
+            statistics[userId] = { uploads: 0, downloads: 0 }
+        })
+
+        uploadCounts.forEach(item => {
+            statistics[item.uploaderId] = {
+                ...statistics[item.uploaderId],
+                uploads: item._count.id,
+            }
+        })
+
+        downloadCounts.forEach(item => {
+            statistics[item.userId] = {
+                ...statistics[item.userId],
+                downloads: item._count.id,
+            }
+        })
+
+        return {
+            success: true,
+            data: statistics,
+        }
+    } catch (error) {
+        console.error("Error fetching user statistics:", error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to fetch user statistics",
+        }
+    }
+}
+
+/**
  * Ban a user
  */
 export async function banUser(params: {

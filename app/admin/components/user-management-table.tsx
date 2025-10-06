@@ -22,13 +22,23 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Ban, Shield, Loader2, AlertCircle } from "lucide-react";
+import {
+	Search,
+	Ban,
+	Shield,
+	Loader2,
+	AlertCircle,
+	Upload,
+	Download,
+} from "lucide-react";
 import { toast } from "sonner";
-import { listUsers, banUser, unbanUser } from "../actions";
+import { listUsers, banUser, unbanUser, getUserStatistics } from "../actions";
 import { User as UserType } from "@/lib/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSession } from "@/lib/auth-client";
 
 export function UserManagementTable() {
+	const { data: session } = useSession();
 	const [users, setUsers] = useState<UserType[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [searchQuery, setSearchQuery] = useState("");
@@ -37,6 +47,9 @@ export function UserManagementTable() {
 	const [banReason, setBanReason] = useState("");
 	const [actionLoading, setActionLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [userStats, setUserStats] = useState<
+		Record<string, { uploads: number; downloads: number }>
+	>({});
 
 	// Fetch users on mount and when search changes
 	const fetchUsers = useCallback(async () => {
@@ -49,7 +62,18 @@ export function UserManagementTable() {
 		});
 
 		if (result.success && result.data) {
-			setUsers(result.data.users as UserType[]);
+			const fetchedUsers = result.data.users as UserType[];
+			setUsers(fetchedUsers);
+
+			// Fetch statistics for all users
+			if (fetchedUsers.length > 0) {
+				const userIds = fetchedUsers.map((user) => user.id);
+				const statsResult = await getUserStatistics(userIds);
+
+				if (statsResult.success && statsResult.data) {
+					setUserStats(statsResult.data);
+				}
+			}
 		} else {
 			const errorMessage = result.error || "Failed to fetch users";
 			setError(errorMessage);
@@ -156,6 +180,8 @@ export function UserManagementTable() {
 								<TableHead>User</TableHead>
 								<TableHead>Role</TableHead>
 								<TableHead>Joined</TableHead>
+								<TableHead className="text-center">Uploads</TableHead>
+								<TableHead className="text-center">Downloads</TableHead>
 								<TableHead>Status</TableHead>
 								<TableHead className="text-right">Actions</TableHead>
 							</TableRow>
@@ -163,14 +189,14 @@ export function UserManagementTable() {
 						<TableBody>
 							{loading ? (
 								<TableRow>
-									<TableCell colSpan={5} className="text-center py-8">
+									<TableCell colSpan={7} className="text-center py-8">
 										<Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
 									</TableCell>
 								</TableRow>
 							) : filteredUsers.length === 0 ? (
 								<TableRow>
 									<TableCell
-										colSpan={5}
+										colSpan={7}
 										className="text-center py-8 text-muted-foreground"
 									>
 										No users found
@@ -194,7 +220,10 @@ export function UserManagementTable() {
 													</AvatarFallback>
 												</Avatar>
 												<div>
-													<div className="font-medium">{user.name}</div>
+													<div className="font-medium">
+														{user.name}{" "}
+														{user.id === session?.user?.id && "(You)"}
+													</div>
 													<div className="text-sm text-muted-foreground">
 														{user.email}
 													</div>
@@ -214,6 +243,22 @@ export function UserManagementTable() {
 										<TableCell className="text-sm text-muted-foreground">
 											{formatDate(user.createdAt.toISOString())}
 										</TableCell>
+										<TableCell className="text-center">
+											<div className="flex items-center justify-center gap-1">
+												<Upload className="h-4 w-4 text-muted-foreground" />
+												<span className="font-medium">
+													{userStats[user.id]?.uploads || 0}
+												</span>
+											</div>
+										</TableCell>
+										<TableCell className="text-center">
+											<div className="flex items-center justify-center gap-1">
+												<Download className="h-4 w-4 text-muted-foreground" />
+												<span className="font-medium">
+													{userStats[user.id]?.downloads || 0}
+												</span>
+											</div>
+										</TableCell>
 										<TableCell>
 											{user.banned ? (
 												<div>
@@ -227,14 +272,14 @@ export function UserManagementTable() {
 											) : (
 												<Badge
 													variant="secondary"
-													className="bg-green-500 text-white"
+													className="bg-green-700 text-white"
 												>
 													Active
 												</Badge>
 											)}
 										</TableCell>
 										<TableCell className="text-right">
-											{!user.banned ? (
+											{user.id === session?.user?.id ? null : !user.banned ? (
 												<Button
 													size="sm"
 													variant="outline"
