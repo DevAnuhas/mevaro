@@ -23,16 +23,17 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Search, Ban, Shield, User, Loader2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import { listUsers, banUser, unbanUser } from "../actions";
 import { User as UserType } from "@/lib/auth";
 
 export function UserManagementTable() {
-  const [users, setUsers] = useState<UserType[]>([]);
+	const [users, setUsers] = useState<UserType[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
-  const [banDialog, setBanDialog] = useState(false)
-  const [banReason, setBanReason] = useState("");
+	const [banDialog, setBanDialog] = useState(false);
+	const [banReason, setBanReason] = useState("");
 	const [actionLoading, setActionLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +50,11 @@ export function UserManagementTable() {
 		if (result.success && result.data) {
 			setUsers(result.data.users as UserType[]);
 		} else {
-			setError(result.error || "Failed to fetch users");
+			const errorMessage = result.error || "Failed to fetch users";
+			setError(errorMessage);
+			toast.error("Failed to load users", {
+				description: errorMessage,
+			});
 		}
 		setLoading(false);
 	}, []);
@@ -68,11 +73,18 @@ export function UserManagementTable() {
 		});
 
 		if (result.success) {
+			toast.success("User banned successfully", {
+				description: `${selectedUser.name} has been banned from the platform.`,
+			});
 			await fetchUsers();
 			setBanDialog(false);
 			setSelectedUser(null);
 			setBanReason("");
 		} else {
+			toast.error("Failed to ban user", {
+				description:
+					result.error || "An error occurred while banning the user.",
+			});
 			setError(result.error || "Failed to ban user");
 		}
 		setActionLoading(false);
@@ -83,8 +95,15 @@ export function UserManagementTable() {
 		const result = await unbanUser({ userId });
 
 		if (result.success) {
+			toast.success("User unbanned successfully", {
+				description: "The user can now access the platform again.",
+			});
 			await fetchUsers();
 		} else {
+			toast.error("Failed to unban user", {
+				description:
+					result.error || "An error occurred while unbanning the user.",
+			});
 			setError(result.error || "Failed to unban user");
 		}
 		setActionLoading(false);

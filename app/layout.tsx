@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import Navigation from "@/app/components/navigation";
+import { Toaster } from "@/components/ui/sonner";
 import { getServerSession } from "@/lib/get-session";
 
 export const metadata: Metadata = {
@@ -27,6 +28,7 @@ export default async function RootLayout({
 			>
 				<Navigation user={user} />
 				{children}
+				<Toaster />
 			</body>
 		</html>
 	);
