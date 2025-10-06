@@ -44,6 +44,15 @@ export default function Navigation({ user }: { user?: UserType }) {
 
 				<div className="hidden items-center md:flex gap-2">
 					<Link
+						href="/"
+						className={cn(
+							"text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg",
+							pathname === "/" && "text-foreground bg-accent"
+						)}
+					>
+						Home
+					</Link>
+					<Link
 						href="/library"
 						className={cn(
 							"text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg",
