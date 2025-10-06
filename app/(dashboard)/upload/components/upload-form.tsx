@@ -6,7 +6,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,43 +23,11 @@ import { CategorySelector } from "./category-selector";
 import { KeywordInput } from "./keyword-input";
 import { UploadPreview } from "./upload-preview";
 import { CheckCircle2 } from "lucide-react";
-
-// Zod schema for form validation
-const uploadFormSchema = z.object({
-	title: z
-		.string()
-		.min(1, "Title is required")
-		.min(3, "Title must be at least 3 characters")
-		.max(100, "Title must be less than 100 characters"),
-	description: z
-		.string()
-		.min(1, "Description is required")
-		.min(10, "Description must be at least 10 characters")
-		.max(500, "Description must be less than 500 characters"),
-	category: z
-		.enum(["Science", "Technology", "Engineering", "Arts", "Mathematics"])
-		.refine((val) => val !== undefined, "Please select a category"),
-	keywords: z
-		.array(z.string().min(1))
-		.min(1, "At least one keyword is required")
-		.max(5, "Maximum 5 keywords allowed"),
-	file: z
-		.instanceof(File, { message: "File is required" })
-		.optional()
-		.refine(
-			(file) => !file || file.size <= 10 * 1024 * 1024, // 10MB
-			"File size must be less than 10MB"
-		)
-		.refine(
-			(file) =>
-				!file ||
-				["application/pdf", "image/png", "image/jpeg"].includes(file.type),
-			"File must be PDF, PNG, or JPEG"
-		)
-		.refine((file) => file !== undefined, "File is required"),
-});
-
-type UploadFormData = z.infer<typeof uploadFormSchema>;
+import { toast } from "sonner";
+import {
+	uploadFormSchema,
+	type UploadFormData,
+} from "@/lib/validations/material";
 
 export function UploadForm() {
 	const router = useRouter();
@@ -101,21 +68,42 @@ export function UploadForm() {
 		setIsUploading(true);
 
 		try {
-			// Mock upload process - in production, this would:
-			// 1. Upload file to CloudFlare R2 using data.file
-			// 2. Create Material record with data.title, data.description, etc.
-			// 3. Notify admins for approval
-			console.log("Submitting form data:", data);
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+			if (!data.file) {
+				throw new Error("File is required");
+			}
+
+			// Prepare form data for upload
+			const formData = new FormData();
+			formData.append("file", data.file);
+			formData.append("title", data.title);
+			formData.append("description", data.description || "");
+			formData.append("category", data.category);
+			formData.append("keywords", JSON.stringify(data.keywords));
+
+			// Upload to API
+			const response = await fetch("/api/materials/upload", {
+				method: "POST",
+				body: formData,
+			});
+
+			const result = await response.json();
+
+			if (!response.ok) {
+				throw new Error(result.error || "Upload failed");
+			}
+
+			// Show success notification
+			toast.success("Material uploaded successfully!", {
+				description: "Your material is pending approval.",
+			});
 
 			setUploadSuccess(true);
-
-			// Redirect to library after 3 seconds
-			setTimeout(() => {
-				router.push("/library");
-			}, 3000);
 		} catch (error) {
 			console.error("Upload failed:", error);
+			toast.error("Upload failed", {
+				description:
+					error instanceof Error ? error.message : "Please try again.",
+			});
 		} finally {
 			setIsUploading(false);
 		}

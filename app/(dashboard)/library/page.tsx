@@ -3,6 +3,9 @@
 import { useState } from "react";
 import LibraryFilters from "./components/library-filters";
 import MaterialCards from "./components/material-cards";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Upload } from "lucide-react";
 
 // Mock data
 const MOCK_MATERIALS = [
@@ -135,12 +138,20 @@ export default function LibraryPage() {
 		<div className="min-h-screen bg-background">
 			<div className="container mx-auto px-6 pt-24 pb-12">
 				{/* Header */}
-				<div className="mb-8">
-					<h1 className="mb-2 text-4xl font-bold">Library</h1>
-					<p className="text-muted-foreground">
-						Explore {MOCK_MATERIALS.length} high-quality learning materials
-						across STEAM disciplines
-					</p>
+				<div className="flex justify-between items-center mb-8">
+					<div>
+						<h1 className="mb-2 text-4xl font-bold">Library</h1>
+						<p className="text-muted-foreground">
+							Explore {MOCK_MATERIALS.length} high-quality learning materials
+							across STEAM disciplines
+						</p>
+					</div>
+					<Button asChild>
+						<Link href="/upload">
+							Contribute to the Library
+							<Upload className="ml-2 h-4 w-4" />
+						</Link>
+					</Button>
 				</div>
 				<LibraryFilters
 					searchQuery={searchQuery}
