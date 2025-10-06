@@ -120,14 +120,17 @@ model Download {
 
 model View {
   id           String   @id @default(cuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   materialId   String
   material     Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  downloadedAt DateTime @default(now())
+  fingerprint  String?
+  viewedAt     DateTime @default(now())
 
   @@index([userId])
   @@index([materialId])
+  @@index([materialId, userId])
+  @@index([materialId, fingerprint])
   @@map("view")
 }
 
