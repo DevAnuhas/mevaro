@@ -51,13 +51,18 @@ export async function POST(request: NextRequest) {
         // Construct public URL
         const fileUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL}/${fileKey}`;
 
+        // Extract file extension from filename
+        const fileExtension = file.name.split('.').pop()?.toUpperCase() ||
+            file.type.split('/').pop()?.toUpperCase() ||
+            'UNKNOWN';
+
         // Create material record
         const material = await prisma.material.create({
             data: {
                 title,
                 description,
                 fileUrl,
-                fileType: file.type,
+                fileType: fileExtension,
                 fileSize: file.size,
                 category: category.toUpperCase() as Category,
                 keywords,

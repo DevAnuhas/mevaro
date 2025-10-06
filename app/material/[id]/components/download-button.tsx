@@ -11,20 +11,29 @@ interface DownloadButtonProps {
 	materialId: string;
 	fileUrl: string;
 	fileName: string;
+	userId?: string;
 }
 
 export function DownloadButton({
 	materialId,
 	fileUrl,
 	fileName,
+	userId,
 }: DownloadButtonProps) {
 	const [isDownloading, setIsDownloading] = useState(false);
 
 	const handleDownload = async () => {
 		setIsDownloading(true);
 		try {
+			// Check if user is logged in
+			if (!userId) {
+				toast.error("Please login to download materials");
+				setIsDownloading(false);
+				return;
+			}
+
 			// Increment download count
-			await incrementDownloadCount(materialId);
+			await incrementDownloadCount(materialId, userId);
 
 			// Trigger download
 			const link = document.createElement("a");

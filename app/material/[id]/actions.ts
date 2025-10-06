@@ -89,8 +89,17 @@ export async function incrementViewCount(id: string, fingerprint?: string, userI
     }
 }
 
-export async function incrementDownloadCount(id: string) {
+export async function incrementDownloadCount(id: string, userId: string) {
     try {
+        // Create download record
+        await prisma.download.create({
+            data: {
+                materialId: id,
+                userId: userId,
+            },
+        });
+
+        // Increment the download count on the material
         await prisma.material.update({
             where: { id },
             data: {

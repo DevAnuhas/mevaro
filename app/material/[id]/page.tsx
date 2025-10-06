@@ -67,6 +67,7 @@ export default async function MaterialPage({
 							materialId={material.id}
 							fileUrl={material.fileUrl}
 							fileName={`${material.title}.${material.fileType}`}
+							userId={userId}
 						/>
 					</div>
 
@@ -99,7 +100,6 @@ export default async function MaterialPage({
 							{material.downloadCount.toLocaleString()} downloads
 						</div>
 					</div>
-
 					{/* Categories */}
 					<div className="flex flex-wrap gap-2 mt-4">
 						<Badge className={`${category?.color} text-white`}>
@@ -129,7 +129,7 @@ export default async function MaterialPage({
 							<h2 className="text-xl font-semibold mb-4">Material Preview</h2>
 							<MaterialViewer
 								fileUrl={material.fileUrl}
-								fileType={material.fileType as "pdf" | "image"}
+								fileType={material.fileType}
 								title={material.title}
 							/>
 						</Card>
