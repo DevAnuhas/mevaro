@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -19,49 +18,36 @@ import { AIQuizGenerator } from "./components/ai-quiz-generator";
 import { AIChatbot } from "./components/ai-chatbot";
 import { AIConceptExtraction } from "./components/ai-concept-extraction";
 import { AILessonPlan } from "./components/ai-lesson-plan";
+import { getMaterialById } from "./actions";
+import { DownloadButton } from "./components/download-button";
+import { ViewTracker } from "./components/view-tracker";
 
-// Mock data - in production, this would come from database
-const getMaterial = (id: string) => {
-	const materials = [
-		{
-			id: "1",
-			title: "Introduction to Quantum Mechanics",
-			description:
-				"A comprehensive guide to the fundamental principles of quantum mechanics, covering wave-particle duality, uncertainty principle, and quantum states.",
-			category: "Science",
-			keywords: ["Physics", "Quantum Theory"],
-			fileUrl: "/placeholder.svg?height=800&width=600",
-			fileType: "pdf",
-			uploaderId: "1",
-			uploaderName: "Dr. Sarah Chen",
-			uploaderAvatar: "/placeholder.svg?height=40&width=40",
-			status: "approved",
-			createdAt: "2024-01-15",
-			downloadCount: 1247,
-			viewCount: 3891,
-		},
-	];
-
-	return materials.find((m) => m.id === id);
+const STEAM_CATEGORIES = {
+	SCIENCE: { name: "Science", color: "bg-green-500" },
+	TECHNOLOGY: { name: "Technology", color: "bg-blue-500" },
+	ENGINEERING: { name: "Engineering", color: "bg-orange-500" },
+	ARTS: { name: "Arts", color: "bg-purple-500" },
+	MATHEMATICS: { name: "Mathematics", color: "bg-red-500" },
 };
 
-const categoryColors = {
-	Science: "bg-green-500",
-	Technology: "bg-blue-500",
-	Engineering: "bg-orange-500",
-	Arts: "bg-purple-500",
-	Mathematics: "bg-red-500",
-};
+export default async function MaterialPage({
+	params,
+}: {
+	params: { id: string };
+}) {
+	const result = await getMaterialById(params.id);
 
-export default function MaterialPage({ params }: { params: { id: string } }) {
-	const material = getMaterial(params.id);
-
-	if (!material) {
+	if (!result.success || !result.data) {
 		notFound();
 	}
 
+	const material = result.data;
+	const category =
+		STEAM_CATEGORIES[material.category as keyof typeof STEAM_CATEGORIES];
+
 	return (
 		<div className="min-h-screen bg-background">
+			<ViewTracker materialId={material.id} />
 			<div className="container mx-auto px-6 pt-24 pb-12">
 				{/* Header */}
 				<div className="mb-8">
@@ -69,13 +55,14 @@ export default function MaterialPage({ params }: { params: { id: string } }) {
 						<div className="flex-1">
 							<h1 className="text-4xl font-bold mb-2">{material.title}</h1>
 							<p className="text-lg text-muted-foreground">
-								{material.description}
+								{material.description || "No description available"}
 							</p>
 						</div>
-						<Button size="lg" className="gap-2">
-							<Download className="h-5 w-5" />
-							Download
-						</Button>
+						<DownloadButton
+							materialId={material.id}
+							fileUrl={material.fileUrl}
+							fileName={`${material.title}.${material.fileType}`}
+						/>
 					</div>
 
 					{/* Metadata */}
@@ -83,13 +70,13 @@ export default function MaterialPage({ params }: { params: { id: string } }) {
 						<div className="flex items-center gap-2">
 							<Avatar className="h-8 w-8">
 								<AvatarImage
-									src={material.uploaderAvatar || "/placeholder.svg"}
+									src={material.uploader.image || "/placeholder.svg"}
 								/>
 								<AvatarFallback>
-									{material.uploaderName.charAt(0)}
+									{material.uploader.name.charAt(0)}
 								</AvatarFallback>
 							</Avatar>
-							<span>{material.uploaderName}</span>
+							<span>{material.uploader.name}</span>
 						</div>
 						<Separator orientation="vertical" className="h-4" />
 						<div className="flex items-center gap-1">
@@ -110,12 +97,8 @@ export default function MaterialPage({ params }: { params: { id: string } }) {
 
 					{/* Categories */}
 					<div className="flex flex-wrap gap-2 mt-4">
-						<Badge
-							className={`${
-								categoryColors[material.category as keyof typeof categoryColors]
-							} text-white`}
-						>
-							{material.category}
+						<Badge className={`${category?.color} text-white`}>
+							{category?.name}
 						</Badge>
 						{material.keywords.map((sub) => (
 							<Badge key={sub} variant="secondary">
@@ -123,7 +106,7 @@ export default function MaterialPage({ params }: { params: { id: string } }) {
 							</Badge>
 						))}
 						<Badge variant="outline" className="gap-1">
-							{material.fileType === "pdf" ? (
+							{material.fileType.includes("pdf") ? (
 								<FileText className="h-3 w-3" />
 							) : (
 								<ImageIcon className="h-3 w-3" />
