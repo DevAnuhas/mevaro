@@ -1,225 +1,293 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Search, Ban, Shield, User } from "lucide-react"
-
-// Mock users (ORM-ready: User table)
-const mockUsers = [
-  {
-    id: "user-1",
-    name: "Dr. Sarah Chen",
-    email: "sarah.chen@university.edu",
-    role: "user",
-    uploadCount: 45,
-    downloadCount: 123,
-    status: "active",
-    createdAt: "2023-06-15T10:30:00Z",
-  },
-  {
-    id: "user-2",
-    name: "Prof. Michael Torres",
-    email: "mtorres@artschool.edu",
-    role: "user",
-    uploadCount: 67,
-    downloadCount: 89,
-    status: "active",
-    createdAt: "2023-08-22T14:20:00Z",
-  },
-  {
-    id: "user-3",
-    name: "Emma Wilson",
-    email: "emma.w@student.edu",
-    role: "user",
-    uploadCount: 12,
-    downloadCount: 234,
-    status: "active",
-    createdAt: "2023-11-10T09:15:00Z",
-  },
-  {
-    id: "user-4",
-    name: "James Rodriguez",
-    email: "j.rodriguez@tech.edu",
-    role: "user",
-    uploadCount: 89,
-    downloadCount: 156,
-    status: "active",
-    createdAt: "2023-05-03T16:45:00Z",
-  },
-  {
-    id: "user-5",
-    name: "Spam Account",
-    email: "spam@example.com",
-    role: "user",
-    uploadCount: 0,
-    downloadCount: 2,
-    status: "banned",
-    createdAt: "2024-01-14T12:00:00Z",
-  },
-]
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Search, Ban, Shield, User, Loader2, AlertCircle } from "lucide-react";
+import { listUsers, banUser, unbanUser } from "../actions";
+import { User as UserType } from "@/lib/auth";
 
 export function UserManagementTable() {
-  const [users, setUsers] = useState(mockUsers)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedUser, setSelectedUser] = useState<(typeof mockUsers)[0] | null>(null)
+  const [users, setUsers] = useState<UserType[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [searchQuery, setSearchQuery] = useState("");
+	const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [banDialog, setBanDialog] = useState(false)
+  const [banReason, setBanReason] = useState("");
+	const [actionLoading, setActionLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
-  const handleBanUser = (userId: string) => {
-    // ORM-ready: UPDATE User SET status='banned' WHERE id=?
-    setUsers(users.map((u) => (u.id === userId ? { ...u, status: "banned" } : u)))
-    setBanDialog(false)
-    setSelectedUser(null)
-  }
+	// Fetch users on mount and when search changes
+	const fetchUsers = useCallback(async () => {
+		setLoading(true);
+		setError(null);
+		const result = await listUsers({
+			limit: 100,
+			sortBy: "createdAt",
+			sortDirection: "desc",
+		});
 
-  const handleUnbanUser = (userId: string) => {
-    // ORM-ready: UPDATE User SET status='active' WHERE id=?
-    setUsers(users.map((u) => (u.id === userId ? { ...u, status: "active" } : u)))
-  }
+		if (result.success && result.data) {
+			setUsers(result.data.users as UserType[]);
+		} else {
+			setError(result.error || "Failed to fetch users");
+		}
+		setLoading(false);
+	}, []);
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+	useEffect(() => {
+		fetchUsers();
+	}, [fetchUsers]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
-  }
+	const handleBanUser = async () => {
+		if (!selectedUser) return;
 
-  return (
-    <>
-      <div className="space-y-4">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search users by name or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+		setActionLoading(true);
+		const result = await banUser({
+			userId: selectedUser.id,
+			banReason: banReason || "Banned by administrator",
+		});
 
-        {/* Table */}
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="text-center">Uploads</TableHead>
-                <TableHead className="text-center">Downloads</TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No users found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
-                          <User className="h-5 w-5 text-primary-foreground" />
-                        </div>
-                        <div>
-                          <div className="font-medium">{user.name}</div>
-                          <div className="text-sm text-muted-foreground">{user.email}</div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {user.role === "admin" ? (
-                        <Badge variant="default" className="gap-1">
-                          <Shield className="h-3 w-3" />
-                          Admin
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">User</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center font-medium">{user.uploadCount}</TableCell>
-                    <TableCell className="text-center font-medium">{user.downloadCount}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{formatDate(user.createdAt)}</TableCell>
-                    <TableCell>
-                      {user.status === "banned" ? (
-                        <Badge variant="destructive">Banned</Badge>
-                      ) : (
-                        <Badge variant="secondary" className="bg-green-500 text-white">
-                          Active
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {user.status === "active" ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 hover:text-red-700 bg-transparent"
-                          onClick={() => {
-                            setSelectedUser(user)
-                            setBanDialog(true)
-                          }}
-                        >
-                          <Ban className="h-4 w-4 mr-1" />
-                          Ban
-                        </Button>
-                      ) : (
-                        <Button size="sm" variant="outline" onClick={() => handleUnbanUser(user.id)}>
-                          Unban
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+		if (result.success) {
+			await fetchUsers();
+			setBanDialog(false);
+			setSelectedUser(null);
+			setBanReason("");
+		} else {
+			setError(result.error || "Failed to ban user");
+		}
+		setActionLoading(false);
+	};
 
-      {/* Ban Dialog */}
-      <Dialog open={banDialog} onOpenChange={setBanDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ban User</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to ban {selectedUser?.name}? This user will no longer be able to access the platform
-              or upload materials.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBanDialog(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={() => selectedUser && handleBanUser(selectedUser.id)}>
-              Ban User
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  )
+	const handleUnbanUser = async (userId: string) => {
+		setActionLoading(true);
+		const result = await unbanUser({ userId });
+
+		if (result.success) {
+			await fetchUsers();
+		} else {
+			setError(result.error || "Failed to unban user");
+		}
+		setActionLoading(false);
+	};
+
+	const filteredUsers = users.filter(
+		(user) =>
+			user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			user.email.toLowerCase().includes(searchQuery.toLowerCase())
+	);
+
+	const formatDate = (dateString: string) => {
+		return new Date(dateString).toLocaleDateString("en-US", {
+			month: "short",
+			day: "numeric",
+			year: "numeric",
+		});
+	};
+
+	return (
+		<>
+			<div className="space-y-4">
+				{/* Error Display */}
+				{error && (
+					<div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+						<div className="flex items-center gap-2">
+							<AlertCircle className="h-4 w-4" />
+							<span>{error}</span>
+						</div>
+					</div>
+				)}
+
+				{/* Search */}
+				<div className="relative">
+					<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+					<Input
+						placeholder="Search users by name or email..."
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
+						className="pl-9"
+					/>
+				</div>
+
+				{/* Table */}
+				<div className="rounded-md border">
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead>User</TableHead>
+								<TableHead>Role</TableHead>
+								<TableHead>Joined</TableHead>
+								<TableHead>Status</TableHead>
+								<TableHead className="text-right">Actions</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{loading ? (
+								<TableRow>
+									<TableCell colSpan={5} className="text-center py-8">
+										<Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+									</TableCell>
+								</TableRow>
+							) : filteredUsers.length === 0 ? (
+								<TableRow>
+									<TableCell
+										colSpan={5}
+										className="text-center py-8 text-muted-foreground"
+									>
+										No users found
+									</TableCell>
+								</TableRow>
+							) : (
+								filteredUsers.map((user) => (
+									<TableRow key={user.id}>
+										<TableCell>
+											<div className="flex items-center gap-3">
+												<div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
+													<User className="h-5 w-5 text-primary-foreground" />
+												</div>
+												<div>
+													<div className="font-medium">{user.name}</div>
+													<div className="text-sm text-muted-foreground">
+														{user.email}
+													</div>
+												</div>
+											</div>
+										</TableCell>
+										<TableCell>
+											{user.role === "admin" ? (
+												<Badge variant="default" className="gap-1">
+													<Shield className="h-3 w-3" />
+													Admin
+												</Badge>
+											) : (
+												<Badge variant="secondary">User</Badge>
+											)}
+										</TableCell>
+										<TableCell className="text-sm text-muted-foreground">
+											{formatDate(user.createdAt.toISOString())}
+										</TableCell>
+										<TableCell>
+											{user.banned ? (
+												<div>
+													<Badge variant="destructive">Banned</Badge>
+													{user.banReason && (
+														<div className="text-xs text-muted-foreground mt-1">
+															{user.banReason}
+														</div>
+													)}
+												</div>
+											) : (
+												<Badge
+													variant="secondary"
+													className="bg-green-500 text-white"
+												>
+													Active
+												</Badge>
+											)}
+										</TableCell>
+										<TableCell className="text-right">
+											{!user.banned ? (
+												<Button
+													size="sm"
+													variant="outline"
+													className="text-red-600 hover:text-red-700 bg-transparent"
+													disabled={actionLoading}
+													onClick={() => {
+														setSelectedUser(user);
+														setBanDialog(true);
+													}}
+												>
+													<Ban className="h-4 w-4 mr-1" />
+													Ban
+												</Button>
+											) : (
+												<Button
+													size="sm"
+													variant="outline"
+													disabled={actionLoading}
+													onClick={() => handleUnbanUser(user.id)}
+												>
+													{actionLoading ? (
+														<Loader2 className="h-4 w-4 mr-1 animate-spin" />
+													) : null}
+													Unban
+												</Button>
+											)}
+										</TableCell>
+									</TableRow>
+								))
+							)}
+						</TableBody>
+					</Table>
+				</div>
+			</div>
+
+			{/* Ban Dialog */}
+			<Dialog open={banDialog} onOpenChange={setBanDialog}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Ban User</DialogTitle>
+						<DialogDescription>
+							Are you sure you want to ban {selectedUser?.name}? This user will
+							no longer be able to access the platform.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="space-y-4 py-4">
+						<div className="space-y-2">
+							<Label htmlFor="ban-reason">Reason for ban (optional)</Label>
+							<Textarea
+								id="ban-reason"
+								placeholder="e.g., Spamming, inappropriate content, etc."
+								value={banReason}
+								onChange={(e) => setBanReason(e.target.value)}
+								rows={3}
+							/>
+						</div>
+					</div>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() => setBanDialog(false)}
+							disabled={actionLoading}
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="destructive"
+							onClick={handleBanUser}
+							disabled={actionLoading}
+						>
+							{actionLoading ? (
+								<>
+									<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+									Banning...
+								</>
+							) : (
+								"Ban User"
+							)}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</>
+	);
 }

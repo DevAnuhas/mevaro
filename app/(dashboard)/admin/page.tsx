@@ -122,7 +122,7 @@ export default async function AdminPage() {
 
 			{/* Management Tabs */}
 			<Tabs defaultValue="approvals" className="space-y-4">
-				<TabsList>
+				<TabsList className="w-full grid grid-cols-3">
 					<TabsTrigger value="approvals" className="gap-2">
 						<Clock className="h-4 w-4" />
 						Pending Approvals
