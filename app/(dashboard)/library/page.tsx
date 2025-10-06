@@ -33,6 +33,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import Link from "next/link";
 
 // Mock data
 const STEAM_CATEGORIES = [
@@ -337,60 +338,66 @@ export default function LibraryPage() {
 							);
 
 							return viewMode === "grid" ? (
-								<Card
-									key={material.id}
-									className="group cursor-pointer border-border bg-card transition-all hover:border-primary"
-								>
-									<div className="p-6 h-full flex flex-col">
-										<div className="mb-4 flex items-start justify-between">
-											<div
-												className="flex h-12 w-12 items-center justify-center rounded-lg"
-												style={{ backgroundColor: category?.color }}
-											>
-												{material.fileType === "pdf" ? (
-													<FileText className="h-6 w-6 text-white" />
-												) : (
-													<ImageIcon className="h-6 w-6 text-white" />
-												)}
-											</div>
-											<Badge variant="secondary" className="text-xs">
-												{category?.name}
-											</Badge>
-										</div>
-
-										<h3 className="mb-2 line-clamp-2 text-lg font-semibold">
-											{material.title}
-										</h3>
-										<p className="mb-4 line-clamp-3 text-sm text-muted-foreground leading-relaxed">
-											{material.description}
-										</p>
-
-										<div className="mb-4 flex flex-wrap gap-2">
-											{material.keywords.map((item) => (
-												<Badge key={item} variant="outline" className="text-xs">
-													{item}
+								<Link href={`/material/${material.id}`} passHref>
+									<Card
+										key={material.id}
+										className="group cursor-pointer border-border bg-card transition-all hover:border-primary"
+									>
+										<div className="p-6 h-full flex flex-col">
+											<div className="mb-4 flex items-start justify-between">
+												<div
+													className="flex h-12 w-12 items-center justify-center rounded-lg"
+													style={{ backgroundColor: category?.color }}
+												>
+													{material.fileType === "pdf" ? (
+														<FileText className="h-6 w-6 text-white" />
+													) : (
+														<ImageIcon className="h-6 w-6 text-white" />
+													)}
+												</div>
+												<Badge variant="secondary" className="text-xs">
+													{category?.name}
 												</Badge>
-											))}
-										</div>
+											</div>
 
-										<div className="flex items-center justify-between border-t border-border mt-auto pt-4 text-xs text-muted-foreground">
-											<div className="flex items-center gap-1">
-												<User className="h-3 w-3" />
-												<span>{material.uploaderName}</span>
+											<h3 className="mb-2 line-clamp-2 text-lg font-semibold">
+												{material.title}
+											</h3>
+											<p className="mb-4 line-clamp-3 text-sm text-muted-foreground leading-relaxed">
+												{material.description}
+											</p>
+
+											<div className="mb-4 flex flex-wrap gap-2">
+												{material.keywords.map((item) => (
+													<Badge
+														key={item}
+														variant="outline"
+														className="text-xs"
+													>
+														{item}
+													</Badge>
+												))}
 											</div>
-											<div className="flex items-center gap-3">
+
+											<div className="flex items-center justify-between border-t border-border mt-auto pt-4 text-xs text-muted-foreground">
 												<div className="flex items-center gap-1">
-													<Download className="h-3 w-3" />
-													<span>{material.downloadCount}</span>
+													<User className="h-3 w-3" />
+													<span>{material.uploaderName}</span>
 												</div>
-												<div className="flex items-center gap-1">
-													<Eye className="h-3 w-3" />
-													<span>{material.viewCount}</span>
+												<div className="flex items-center gap-3">
+													<div className="flex items-center gap-1">
+														<Download className="h-3 w-3" />
+														<span>{material.downloadCount}</span>
+													</div>
+													<div className="flex items-center gap-1">
+														<Eye className="h-3 w-3" />
+														<span>{material.viewCount}</span>
+													</div>
 												</div>
 											</div>
 										</div>
-									</div>
-								</Card>
+									</Card>
+								</Link>
 							) : (
 								<Card
 									key={material.id}
