@@ -21,59 +21,50 @@ import {
 import { Upload, Download, FileText, Calendar, TrendingUp } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
-
-// Mock data - will be replaced with actual data from DB
-const mockUserStats = {
-	uploadCount: 24,
-	downloadCount: 156,
-	joinedDate: "2024-01-15",
-	lastActive: "2024-03-10",
-	totalViews: 3420,
-	favoriteCategory: "Technology",
-};
-
-const mockRecentActivity = [
-	{
-		id: 1,
-		type: "upload",
-		title: "Introduction to Quantum Computing",
-		category: "Science",
-		date: "2024-03-10",
-	},
-	{
-		id: 2,
-		type: "download",
-		title: "Advanced React Patterns",
-		category: "Technology",
-		date: "2024-03-09",
-	},
-	{
-		id: 3,
-		type: "download",
-		title: "Linear Algebra Fundamentals",
-		category: "Mathematics",
-		date: "2024-03-08",
-	},
-	{
-		id: 4,
-		type: "upload",
-		title: "Digital Art Composition Guide",
-		category: "Arts",
-		date: "2024-03-07",
-	},
-	{
-		id: 5,
-		type: "download",
-		title: "Structural Engineering Basics",
-		category: "Engineering",
-		date: "2024-03-06",
-	},
-];
+import { getUserStats, getRecentActivity } from "./actions";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function AccountDashboard() {
 	const { data: session } = useSession();
+	const [userStats, setUserStats] = useState<{
+		uploadCount: number;
+		downloadCount: number;
+		joinedDate: string;
+		materialViews: number;
+		materialDownloads: number;
+		favoriteCategory: string;
+	} | null>(null);
+	const [recentActivity, setRecentActivity] = useState<
+		Array<{
+			id: string;
+			type: "upload" | "download";
+			title: string;
+			category: string;
+			date: string;
+		}>
+	>([]);
+	const [loading, setLoading] = useState(true);
 
-	if (!session?.user) {
+	useEffect(() => {
+		if (session?.user?.id) {
+			Promise.all([
+				getUserStats(session.user.id),
+				getRecentActivity(session.user.id),
+			]).then(([statsResult, activityResult]) => {
+				if (statsResult.success && statsResult.data) {
+					setUserStats(statsResult.data);
+				}
+				if (activityResult.success && activityResult.data) {
+					setRecentActivity(activityResult.data);
+				}
+				setLoading(false);
+			});
+		}
+	}, [session?.user?.id]);
+
+	if (!session?.user || loading) {
 		return (
 			<div className="min-h-screen bg-background flex items-center justify-center">
 				<Spinner className="size-8" />
@@ -83,35 +74,55 @@ export default function AccountDashboard() {
 
 	const user = session.user;
 
+	// Default values if data hasn't loaded yet
+	const stats = userStats || {
+		uploadCount: 0,
+		downloadCount: 0,
+		joinedDate: new Date().toISOString(),
+		materialViews: 0,
+		materialDownloads: 0,
+		favoriteCategory: "None",
+	};
+
 	// Pie chart data
 	const chartData = [
 		{
 			name: "Uploads",
-			value: mockUserStats.uploadCount,
+			value: stats.uploadCount,
 			color: "hsl(var(--primary))",
 		},
 		{
 			name: "Downloads",
-			value: mockUserStats.downloadCount,
+			value: stats.downloadCount,
 			color: "hsl(var(--chart-2))",
 		},
 	];
 
-	const contributionRatio = (
-		(mockUserStats.uploadCount /
-			(mockUserStats.uploadCount + mockUserStats.downloadCount)) *
-		100
-	).toFixed(1);
+	const contributionRatio =
+		stats.uploadCount + stats.downloadCount > 0
+			? (
+					(stats.uploadCount / (stats.uploadCount + stats.downloadCount)) *
+					100
+			  ).toFixed(1)
+			: "0.0";
 
 	return (
 		<div className="min-h-screen bg-background">
 			<div className="container mx-auto px-6 pt-24 pb-12">
 				{/* Header */}
-				<div className="mb-8">
-					<h1 className="text-4xl font-bold mb-2">My Account</h1>
-					<p className="text-muted-foreground">
-						Manage your profile and track your learning journey
-					</p>
+				<div className="flex justify-between items-center mb-8">
+					<div>
+						<h1 className="text-4xl font-bold mb-2">My Account</h1>
+						<p className="text-muted-foreground">
+							Manage your profile and track your learning journey
+						</p>
+					</div>
+					<Button asChild>
+						<Link href="/upload">
+							Contribute to the Library
+							<Upload className="ml-2 h-4 w-4" />
+						</Link>
+					</Button>
 				</div>
 
 				{/* Profile Section */}
@@ -134,11 +145,7 @@ export default function AccountDashboard() {
 							<div className="flex-1">
 								<div className="flex items-center gap-3 mb-2">
 									<h2 className="text-2xl font-bold">{user.name}</h2>
-									{/* <Badge
-										variant={user.role === "admin" ? "default" : "secondary"}
-									>
-										{user.role === "admin" ? "Admin" : "Member"}
-									</Badge> */}
+									{user.role === "admin" && <Badge>Admin</Badge>}
 								</div>
 								<p className="text-muted-foreground mb-4">{user.email}</p>
 
@@ -147,18 +154,15 @@ export default function AccountDashboard() {
 										<Calendar className="h-4 w-4 text-muted-foreground" />
 										<span>
 											Joined{" "}
-											{new Date(mockUserStats.joinedDate).toLocaleDateString(
-												"en-US",
-												{
-													month: "long",
-													year: "numeric",
-												}
-											)}
+											{new Date(stats.joinedDate).toLocaleDateString("en-US", {
+												month: "long",
+												year: "numeric",
+											})}
 										</span>
 									</div>
 									<div className="flex items-center gap-2">
 										<TrendingUp className="h-4 w-4 text-muted-foreground" />
-										<span>Favorite: {mockUserStats.favoriteCategory}</span>
+										<span>Favorite: {stats.favoriteCategory}</span>
 									</div>
 								</div>
 							</div>
@@ -167,53 +171,74 @@ export default function AccountDashboard() {
 				</Card>
 
 				{/* Stats Grid */}
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+					{/* User Activity Card */}
 					<Card>
-						<CardHeader className="flex flex-row items-center justify-between pb-2">
-							<CardTitle className="text-sm font-medium">
-								Total Uploads
-							</CardTitle>
-							<Upload className="h-4 w-4 text-muted-foreground" />
+						<CardHeader>
+							<CardTitle>My Activity</CardTitle>
+							<CardDescription>
+								Materials you&apos;ve uploaded and downloaded
+							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<div className="text-3xl font-bold">
-								{mockUserStats.uploadCount}
+							<div className="flex items-center justify-around gap-4">
+								<div className="flex items-center gap-3">
+									<div className="rounded-lg p-2 bg-primary/10">
+										<Upload className="h-5 w-5 text-primary" />
+									</div>
+									<div>
+										<p className="text-sm text-muted-foreground">Uploads</p>
+										<p className="text-2xl font-bold">{stats.uploadCount}</p>
+									</div>
+								</div>
+								<div className="flex items-center gap-3">
+									<div className="rounded-lg p-2 bg-muted">
+										<Download className="h-5 w-5 text-muted-foreground" />
+									</div>
+									<div>
+										<p className="text-sm text-muted-foreground">Downloads</p>
+										<p className="text-2xl font-bold">{stats.downloadCount}</p>
+									</div>
+								</div>
 							</div>
-							<p className="text-xs text-muted-foreground mt-1">
-								Materials contributed
-							</p>
 						</CardContent>
 					</Card>
 
+					{/* Material Performance Card */}
 					<Card>
-						<CardHeader className="flex flex-row items-center justify-between pb-2">
-							<CardTitle className="text-sm font-medium">
-								Total Downloads
-							</CardTitle>
-							<Download className="h-4 w-4 text-muted-foreground" />
+						<CardHeader>
+							<CardTitle>Material Impact</CardTitle>
+							<CardDescription>
+								Engagement on your uploaded materials
+							</CardDescription>
 						</CardHeader>
 						<CardContent>
-							<div className="text-3xl font-bold">
-								{mockUserStats.downloadCount}
+							<div className="flex items-center justify-around gap-4">
+								<div className="flex items-center gap-3">
+									<div className="rounded-lg p-2 bg-blue-500/10">
+										<FileText className="h-5 w-5 text-blue-500" />
+									</div>
+									<div>
+										<p className="text-sm text-muted-foreground">Total Views</p>
+										<p className="text-2xl font-bold">
+											{stats.materialViews.toLocaleString()}
+										</p>
+									</div>
+								</div>
+								<div className="flex items-center gap-3">
+									<div className="rounded-lg p-2 bg-green-500/10">
+										<Download className="h-5 w-5 text-green-500" />
+									</div>
+									<div>
+										<p className="text-sm text-muted-foreground">
+											Total Downloads
+										</p>
+										<p className="text-2xl font-bold">
+											{stats.materialDownloads.toLocaleString()}
+										</p>
+									</div>
+								</div>
 							</div>
-							<p className="text-xs text-muted-foreground mt-1">
-								Materials accessed
-							</p>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader className="flex flex-row items-center justify-between pb-2">
-							<CardTitle className="text-sm font-medium">Total Views</CardTitle>
-							<FileText className="h-4 w-4 text-muted-foreground" />
-						</CardHeader>
-						<CardContent>
-							<div className="text-3xl font-bold">
-								{mockUserStats.totalViews.toLocaleString()}
-							</div>
-							<p className="text-xs text-muted-foreground mt-1">
-								On your materials
-							</p>
 						</CardContent>
 					</Card>
 				</div>
@@ -270,44 +295,50 @@ export default function AccountDashboard() {
 						</CardHeader>
 						<CardContent>
 							<div className="space-y-4">
-								{mockRecentActivity.map((activity, index) => (
-									<div key={activity.id}>
-										<div className="flex items-start gap-3">
-											<div
-												className={`mt-1 rounded-full p-2 ${
-													activity.type === "upload"
-														? "bg-primary text-primary-foreground"
-														: "bg-muted"
-												}`}
-											>
-												{activity.type === "upload" ? (
-													<Upload className="h-3 w-3" />
-												) : (
-													<Download className="h-3 w-3" />
-												)}
-											</div>
-											<div className="flex-1 min-w-0">
-												<p className="text-sm font-medium truncate">
-													{activity.title}
-												</p>
-												<div className="flex items-center gap-2 mt-1">
-													<Badge variant="outline" className="text-xs">
-														{activity.category}
-													</Badge>
-													<span className="text-xs text-muted-foreground">
-														{new Date(activity.date).toLocaleDateString(
-															"en-US",
-															{ month: "short", day: "numeric" }
-														)}
-													</span>
+								{recentActivity.length === 0 ? (
+									<p className="text-sm text-muted-foreground text-center py-4">
+										No recent activity
+									</p>
+								) : (
+									recentActivity.map((activity, index) => (
+										<div key={activity.id}>
+											<div className="flex items-start gap-3">
+												<div
+													className={`mt-1 rounded-full p-2 ${
+														activity.type === "upload"
+															? "bg-primary text-primary-foreground"
+															: "bg-muted"
+													}`}
+												>
+													{activity.type === "upload" ? (
+														<Upload className="h-3 w-3" />
+													) : (
+														<Download className="h-3 w-3" />
+													)}
+												</div>
+												<div className="flex-1 min-w-0">
+													<p className="text-sm font-medium truncate">
+														{activity.title}
+													</p>
+													<div className="flex items-center gap-2 mt-1">
+														<Badge variant="outline" className="text-xs">
+															{activity.category}
+														</Badge>
+														<span className="text-xs text-muted-foreground">
+															{new Date(activity.date).toLocaleDateString(
+																"en-US",
+																{ month: "short", day: "numeric" }
+															)}
+														</span>
+													</div>
 												</div>
 											</div>
+											{index < recentActivity.length - 1 && (
+												<Separator className="mt-4" />
+											)}
 										</div>
-										{index < mockRecentActivity.length - 1 && (
-											<Separator className="mt-4" />
-										)}
-									</div>
-								))}
+									))
+								)}
 							</div>
 						</CardContent>
 					</Card>
