@@ -2,26 +2,134 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@layer base {
+	:root {
+		--background: 255 255 255;
+		--foreground: 10 10 10;
+		--card: 245 245 245;
+		--card-foreground: 14 14 14;
+		--popover: 255 255 255;
+		--popover-foreground: 10 10 10;
+		--primary: 255 69 51;
+		--primary-foreground: 255 255 255;
+		--secondary: 240 240 240;
+		--secondary-foreground: 28 28 28;
+		--muted: 248 248 248;
+		--muted-foreground: 102 102 102;
+		--accent: 239 239 239;
+		--accent-foreground: 26 26 26;
+		--destructive: 239 68 68;
+		--destructive-foreground: 255 255 255;
+		--border: 224 224 224;
+		--input: 240 240 240;
+		--ring: 255 69 51;
+		--chart-1: 255 69 51;
+		--chart-2: 51 255 69;
+		--chart-3: 69 51 255;
+		--chart-4: 255 255 51;
+		--chart-5: 51 255 255;
+		--sidebar: 255 255 255;
+		--sidebar-foreground: 10 10 10;
+		--sidebar-primary: 255 69 51;
+		--sidebar-primary-foreground: 255 255 255;
+		--sidebar-accent: 239 239 239;
+		--sidebar-accent-foreground: 26 26 26;
+		--sidebar-border: 224 224 224;
+		--sidebar-ring: 255 69 51;
+		--font-sans: 'Inter', sans-serif;
+		--font-serif: 'Playfair Display', serif;
+		--font-mono: 'JetBrains Mono', monospace;
+		--radius: 0.5rem;
+		--shadow-x: 0px;
+		--shadow-y: 4px;
+		--shadow-blur: 10px;
+		--shadow-spread: 0px;
+		--shadow-opacity: 0.1;
+		--shadow-color: #000000;
+		--shadow-2xs: 0px 4px 10px 0px hsl(0 0% 0% / 0.05);
+		--shadow-xs: 0px 4px 10px 0px hsl(0 0% 0% / 0.05);
+		--shadow-sm: 0px 4px 10px 0px hsl(0 0% 0% / 0.10), 0px 1px 2px -1px hsl(0 0% 0% / 0.10);
+		--shadow: 0px 4px 10px 0px hsl(0 0% 0% / 0.10), 0px 1px 2px -1px hsl(0 0% 0% / 0.10);
+		--shadow-md: 0px 4px 10px 0px hsl(0 0% 0% / 0.10), 0px 2px 4px -1px hsl(0 0% 0% / 0.10);
+		--shadow-lg: 0px 4px 10px 0px hsl(0 0% 0% / 0.10), 0px 4px 6px -1px hsl(0 0% 0% / 0.10);
+		--shadow-xl: 0px 4px 10px 0px hsl(0 0% 0% / 0.10), 0px 8px 10px -1px hsl(0 0% 0% / 0.10);
+		--shadow-2xl: 0px 4px 10px 0px hsl(0 0% 0% / 0.25);
+		--tracking-normal: 0em;
+		--spacing: 0.25rem;
+	}
+	.dark {
+		--background: 10 10 10;
+		--foreground: 252 252 250;
+		--card: 14 14 14;
+		--card-foreground: 252 252 250;
+		--popover: 10 10 10;
+		--popover-foreground: 252 252 250;
+		--primary: 255 69 51;
+		--primary-foreground: 252 252 250;
+		--secondary: 28 28 28;
+		--secondary-foreground: 224 224 224;
+		--muted: 20 20 20;
+		--muted-foreground: 153 153 153;
+		--accent: 29 29 29;
+		--accent-foreground: 252 252 250;
+		--destructive: 239 68 68;
+		--destructive-foreground: 252 252 250;
+		--border: 42 42 42;
+		--input: 28 28 28;
+		--ring: 255 69 51;
+		--chart-1: 255 69 51;
+		--chart-2: 51 255 69;
+		--chart-3: 69 51 255;
+		--chart-4: 255 255 51;
+		--chart-5: 51 255 255;
+		--sidebar: 14 14 14;
+		--sidebar-foreground: 252 252 250;
+		--sidebar-primary: 255 69 51;
+		--sidebar-primary-foreground: 252 252 250;
+		--sidebar-accent: 29 29 29;
+		--sidebar-accent-foreground: 252 252 250;
+		--sidebar-border: 42 42 42;
+		--sidebar-ring: 255 69 51;
+		--font-sans: 'Inter', sans-serif;
+		--font-serif: 'Playfair Display', serif;
+		--font-mono: 'JetBrains Mono', monospace;
+		--radius: 0.5rem;
+		--shadow-x: 0px;
+		--shadow-y: 4px;
+		--shadow-blur: 10px;
+		--shadow-spread: 0px;
+		--shadow-opacity: 0.5;
+		--shadow-color: #000000;
+		--shadow-2xs: 0px 4px 10px 0px hsl(0 0% 0% / 0.25);
+		--shadow-xs: 0px 4px 10px 0px hsl(0 0% 0% / 0.25);
+		--shadow-sm: 0px 4px 10px 0px hsl(0 0% 0% / 0.50), 0px 1px 2px -1px hsl(0 0% 0% / 0.50);
+		--shadow: 0px 4px 10px 0px hsl(0 0% 0% / 0.50), 0px 1px 2px -1px hsl(0 0% 0% / 0.50);
+		--shadow-md: 0px 4px 10px 0px hsl(0 0% 0% / 0.50), 0px 2px 4px -1px hsl(0 0% 0% / 0.50);
+		--shadow-lg: 0px 4px 10px 0px hsl(0 0% 0% / 0.50), 0px 4px 6px -1px hsl(0 0% 0% / 0.50);
+		--shadow-xl: 0px 4px 10px 0px hsl(0 0% 0% / 0.50), 0px 8px 10px -1px hsl(0 0% 0% / 0.50);
+		--shadow-2xl: 0px 4px 10px 0px hsl(0 0% 0% / 1.25);
+	}
+	.theme {
+		--font-sans: 'Geist', sans-serif;
+		--font-mono: 'JetBrains Mono', monospace;
+		--font-serif: 'Playfair Display', serif;
+		--radius: 0.5rem;
+		--tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+		--tracking-tight: calc(var(--tracking-normal) - 0.025em);
+		--tracking-wide: calc(var(--tracking-normal) + 0.025em);
+		--tracking-wider: calc(var(--tracking-normal) + 0.05em);
+		--tracking-widest: calc(var(--tracking-normal) + 0.1em);
+	}
+	body {
+		letter-spacing: var(--tracking-normal);
+	}
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+@layer base {
+  	* {
+		@apply border-border;
+	}
+	body {
+		@apply bg-background text-foreground;
+	}
 }
