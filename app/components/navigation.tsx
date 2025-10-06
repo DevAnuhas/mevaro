@@ -42,22 +42,31 @@ export default function Navigation({ user }: { user?: UserType }) {
 					<span className="text-xl font-semibold">Mevaro</span>
 				</Link>
 
-				<div className="hidden items-center md:flex">
+				<div className="hidden items-center md:flex gap-2">
 					<Link
 						href="/library"
-						className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg"
+						className={cn(
+							"text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg",
+							pathname === "/library" && "text-foreground bg-accent"
+						)}
 					>
 						Library
 					</Link>
 					<Link
 						href="/about"
-						className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg"
+						className={cn(
+							"text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg",
+							pathname === "/about" && "text-foreground bg-accent"
+						)}
 					>
 						About
 					</Link>
 					<Link
 						href="/pricing"
-						className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg"
+						className={cn(
+							"text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg",
+							pathname === "/pricing" && "text-foreground bg-accent"
+						)}
 					>
 						Pricing
 					</Link>

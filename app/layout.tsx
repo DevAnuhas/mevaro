@@ -23,7 +23,7 @@ export default async function RootLayout({
 	return (
 		<html lang="en" className="dark">
 			<body
-				className={`${GeistSans.className} ${GeistMono.variable} antialiased`}
+				className={`${GeistSans.className} ${GeistMono.variable} antialiased overflow-x-hidden`}
 			>
 				<Navigation user={user} />
 				{children}
