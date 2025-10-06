@@ -10,6 +10,11 @@ import {
 	Shield,
 	Zap,
 	TrendingUp,
+	Atom,
+	Cpu,
+	Wrench,
+	Palette,
+	Calculator,
 } from "lucide-react";
 import { Spotlight } from "@/components/ui/spotlight-new";
 
@@ -154,22 +159,35 @@ export default function HomePage() {
 
 				<div className="grid gap-4 md:grid-cols-5">
 					{[
-						{ name: "Science", color: "oklch(0.55 0.20 150)", count: "2,500+" },
+						{
+							name: "Science",
+							color: "oklch(0.55 0.20 150)",
+							count: "2,500+",
+							icon: Atom,
+						},
 						{
 							name: "Technology",
 							color: "oklch(0.60 0.18 220)",
 							count: "3,200+",
+							icon: Cpu,
 						},
 						{
 							name: "Engineering",
 							color: "oklch(0.65 0.15 30)",
 							count: "1,800+",
+							icon: Wrench,
 						},
-						{ name: "Arts", color: "oklch(0.50 0.22 280)", count: "1,500+" },
+						{
+							name: "Arts",
+							color: "oklch(0.50 0.22 280)",
+							count: "1,500+",
+							icon: Palette,
+						},
 						{
 							name: "Mathematics",
 							color: "oklch(0.70 0.18 60)",
 							count: "2,000+",
+							icon: Calculator,
 						},
 					].map((category) => (
 						<Card
@@ -177,9 +195,11 @@ export default function HomePage() {
 							className="group cursor-pointer border-border bg-card p-6 text-center backdrop-blur transition-all hover:scale-105 hover:border-primary"
 						>
 							<div
-								className="mx-auto mb-4 h-16 w-16 rounded-full transition-transform group-hover:scale-110"
+								className="mx-auto mb-4 h-16 w-16 rounded-full transition-transform group-hover:scale-110 flex items-center justify-center"
 								style={{ backgroundColor: category.color }}
-							/>
+							>
+								<category.icon className="h-8 w-8 text-white" />
+							</div>
 							<h3 className="mb-2 text-lg font-semibold">{category.name}</h3>
 							<p className="text-sm text-muted-foreground">
 								{category.count} materials
