@@ -341,7 +341,7 @@ export default function LibraryPage() {
 								<Link href={`/material/${material.id}`} passHref>
 									<Card
 										key={material.id}
-										className="group cursor-pointer border-border bg-card transition-all hover:border-primary"
+										className="group cursor-pointer border-border bg-card transition-all hover:border-primary h-full"
 									>
 										<div className="p-6 h-full flex flex-col">
 											<div className="mb-4 flex items-start justify-between">

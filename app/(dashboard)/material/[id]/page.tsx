@@ -141,7 +141,7 @@ export default function MaterialPage({ params }: { params: { id: string } }) {
 							<h2 className="text-xl font-semibold mb-4">Material Preview</h2>
 							<MaterialViewer
 								fileUrl={material.fileUrl}
-								fileType={material.fileType}
+								fileType={material.fileType as "pdf" | "image"}
 								title={material.title}
 							/>
 						</Card>
