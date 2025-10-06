@@ -29,7 +29,7 @@ const getMaterial = (id: string) => {
 			description:
 				"A comprehensive guide to the fundamental principles of quantum mechanics, covering wave-particle duality, uncertainty principle, and quantum states.",
 			category: "Science",
-			subcategories: ["Physics", "Quantum Theory"],
+			keywords: ["Physics", "Quantum Theory"],
 			fileUrl: "/placeholder.svg?height=800&width=600",
 			fileType: "pdf",
 			uploaderId: "1",
@@ -117,7 +117,7 @@ export default function MaterialPage({ params }: { params: { id: string } }) {
 						>
 							{material.category}
 						</Badge>
-						{material.subcategories.map((sub) => (
+						{material.keywords.map((sub) => (
 							<Badge key={sub} variant="secondary">
 								{sub}
 							</Badge>
