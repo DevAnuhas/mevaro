@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Search } from "lucide-react";
 import { UserMenu } from "./user-menu";
-import { User as UserType } from "better-auth";
+import { User as UserType } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export default function Navigation({ user }: { user?: UserType }) {

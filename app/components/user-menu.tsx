@@ -13,10 +13,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
-import { User, Settings, LogOut, Shield, BarChart } from "lucide-react";
+import { User, Settings, LogOut, Shield } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "@/lib/auth-client";
-import { User as UserType } from "better-auth";
+import { User as UserType } from "@/lib/auth";
 
 export function UserMenu({ user }: { user: UserType }) {
 	const [isSigningOut, setIsSigningOut] = useState(false);
@@ -62,26 +62,20 @@ export function UserMenu({ user }: { user: UserType }) {
 					</div>
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
-				<DropdownMenuItem asChild>
-					<Link href="/account" className="cursor-pointer">
-						<User className="mr-2 h-4 w-4" />
-						<span>My Account</span>
-					</Link>
-				</DropdownMenuItem>
-				<DropdownMenuItem asChild>
-					<Link href="/account" className="cursor-pointer">
-						<BarChart className="mr-2 h-4 w-4" />
-						<span>My Stats</span>
-					</Link>
-				</DropdownMenuItem>
-				{/* {user.role === "admin" && (
+				{user?.role === "admin" && (
 					<DropdownMenuItem asChild>
 						<Link href="/admin" className="cursor-pointer">
 							<Shield className="mr-2 h-4 w-4" />
 							<span>Admin Dashboard</span>
 						</Link>
 					</DropdownMenuItem>
-				)} */}
+				)}
+				<DropdownMenuItem asChild>
+					<Link href="/account" className="cursor-pointer">
+						<User className="mr-2 h-4 w-4" />
+						<span>My Account</span>
+					</Link>
+				</DropdownMenuItem>
 				<DropdownMenuItem asChild>
 					<Link href="/settings" className="cursor-pointer">
 						<Settings className="mr-2 h-4 w-4" />

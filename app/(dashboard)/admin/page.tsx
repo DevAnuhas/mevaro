@@ -10,6 +10,8 @@ import { Users, FileText, Download, Clock } from "lucide-react";
 import { PendingApprovalsTable } from "./components/pending-approvals-table";
 import { UserManagementTable } from "./components/user-management-table";
 import { MaterialManagementTable } from "./components/material-management-table";
+import { notFound } from "next/navigation";
+import { getServerSession } from "@/lib/get-session";
 
 // Mock global statistics (ORM-ready: aggregate queries on User, Material, Download tables)
 const globalStats = {
@@ -23,7 +25,13 @@ const globalStats = {
 	downloadsThisMonth: 4521,
 };
 
-export default function AdminPage() {
+export default async function AdminPage() {
+	const session = await getServerSession();
+
+	if (session?.user.role !== "admin") {
+		return notFound();
+	}
+
 	return (
 		<div className="container mx-auto px-6 pt-24 pb-12">
 			{/* Header */}
