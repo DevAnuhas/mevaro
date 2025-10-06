@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Search } from "lucide-react";
 import { UserMenu } from "./user-menu";
+import { User as UserType } from "better-auth";
+import { cn } from "@/lib/utils";
 
-interface Props {
-	user?: { name: string; email: string } | null | undefined;
-}
+export default function Navigation({ user }: { user?: UserType }) {
+	const pathname = usePathname();
+	const isHomePage = pathname === "/";
 
-export default function Navigation({ user }: Props) {
 	const [scrolled, setScrolled] = useState(false);
 
 	useEffect(() => {
@@ -25,11 +27,12 @@ export default function Navigation({ user }: Props) {
 
 	return (
 		<nav
-			className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
-				scrolled
-					? "border-b bg-background/80 backdrop-blur-lg"
-					: "border-b-transparent bg-transparent"
-			}`}
+			className={cn(
+				"fixed top-0 left-0 right-0 z-50 transition-all duration-200",
+				isHomePage && !scrolled
+					? "border-b-transparent bg-transparent"
+					: "border-b bg-background/80 backdrop-blur-lg"
+			)}
 		>
 			<div className="container mx-auto flex items-center justify-between px-6 py-4">
 				<Link href="/" className="flex items-center gap-2">

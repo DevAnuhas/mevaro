@@ -11,22 +11,16 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Spinner } from "@/components/ui/spinner";
 import { User, Settings, LogOut, Shield, BarChart } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "@/lib/auth-client";
+import { User as UserType } from "better-auth";
 
-export function UserMenu({ user }: { user: { name: string; email: string } }) {
+export function UserMenu({ user }: { user: UserType }) {
 	const [isSigningOut, setIsSigningOut] = useState(false);
 	const router = useRouter();
-
-	const initials = user.name
-		.split(" ")
-		.map((n) => n[0])
-		.join("")
-		.toUpperCase()
-		.slice(0, 2);
 
 	const handleSignOut = async (e: React.MouseEvent) => {
 		e.preventDefault();
@@ -45,10 +39,16 @@ export function UserMenu({ user }: { user: { name: string; email: string } }) {
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button variant="ghost" className="relative h-9 w-9 rounded-full">
-					<Avatar className="h-9 w-9">
-						<AvatarFallback className="bg-accent text-accent-foreground">
-							{initials}
-						</AvatarFallback>
+					<Avatar className="h-8 w-8">
+						<AvatarImage src={user.image || ""} alt={user.name} />
+						{user.name && (
+							<AvatarFallback className="bg-primary text-primary-foreground">
+								{user.name
+									.split(" ")
+									.map((n: string) => n[0])
+									.join("")}
+							</AvatarFallback>
+						)}
 					</Avatar>
 				</Button>
 			</DropdownMenuTrigger>

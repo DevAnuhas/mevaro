@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
-import { getServerSession } from "@/lib/get-session";
 import Navigation from "@/app/components/navigation";
+import { getServerSession } from "@/lib/get-session";
 
 export const metadata: Metadata = {
 	title: "Mevaro - AI-Powered Digital Knowledge Platform",

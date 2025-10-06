@@ -15,7 +15,7 @@ import { Spotlight } from "@/components/ui/spotlight-new";
 
 export default function HomePage() {
 	return (
-		<div className="min-h-screen">
+		<div className="min-h-screen pt-16">
 			{/* Hero Section */}
 			<section className="container mx-auto px-6 pt-32 pb-20">
 				<Spotlight />
