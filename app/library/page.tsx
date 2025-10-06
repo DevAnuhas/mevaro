@@ -1,138 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LibraryFilters from "./components/library-filters";
 import MaterialCards from "./components/material-cards";
+import MaterialCardsSkeleton from "./components/material-cards-skeleton";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Upload } from "lucide-react";
+import { getMaterials } from "./actions";
+import { useDebounce } from "@/lib/hooks/use-debounce";
+import type { Material, User } from "@prisma/client";
+import { toast } from "sonner";
 
-// Mock data
-const MOCK_MATERIALS = [
-	{
-		id: "1",
-		title: "Introduction to Quantum Mechanics",
-		description:
-			"A comprehensive guide to understanding the fundamental principles of quantum mechanics and wave-particle duality.",
-		category: "science",
-		keywords: ["Physics", "Quantum Theory"],
-		fileType: "pdf",
-		uploaderId: "user-1",
-		uploaderName: "Dr. Sarah Chen",
-		status: "approved",
-		createdAt: "2025-01-15T10:30:00Z",
-		downloadCount: 1250,
-		viewCount: 3400,
-	},
-	{
-		id: "2",
-		title: "Machine Learning Fundamentals",
-		description:
-			"Learn the basics of machine learning algorithms, neural networks, and practical applications in modern AI.",
-		category: "technology",
-		keywords: ["AI", "Programming"],
-		fileType: "pdf",
-		uploaderId: "user-2",
-		uploaderName: "Prof. James Wilson",
-		status: "approved",
-		createdAt: "2025-01-20T14:15:00Z",
-		downloadCount: 2100,
-		viewCount: 5200,
-	},
-	{
-		id: "3",
-		title: "Structural Engineering Principles",
-		description:
-			"Essential concepts in structural analysis, load calculations, and building design for civil engineers.",
-		category: "engineering",
-		keywords: ["Civil Engineering", "Structures"],
-		fileType: "pdf",
-		uploaderId: "user-3",
-		uploaderName: "Eng. Michael Brown",
-		status: "approved",
-		createdAt: "2025-01-18T09:00:00Z",
-		downloadCount: 890,
-		viewCount: 2100,
-	},
-	{
-		id: "4",
-		title: "Color Theory in Digital Art",
-		description:
-			"Master the principles of color harmony, contrast, and composition in digital illustration and design.",
-		category: "arts",
-		keywords: ["Digital Art", "Design"],
-		fileType: "png",
-		uploaderId: "user-4",
-		uploaderName: "Artist Emma Davis",
-		status: "approved",
-		createdAt: "2025-01-22T16:45:00Z",
-		downloadCount: 1560,
-		viewCount: 4100,
-	},
-	{
-		id: "5",
-		title: "Calculus: Limits and Derivatives",
-		description:
-			"Comprehensive study material covering limits, continuity, and differential calculus with solved examples.",
-		category: "mathematics",
-		keywords: ["Calculus", "Analysis"],
-		fileType: "pdf",
-		uploaderId: "user-5",
-		uploaderName: "Dr. Robert Taylor",
-		status: "approved",
-		createdAt: "2025-01-25T11:20:00Z",
-		downloadCount: 1780,
-		viewCount: 4500,
-	},
-	{
-		id: "6",
-		title: "Organic Chemistry Reactions",
-		description:
-			"Visual guide to common organic chemistry reactions, mechanisms, and synthesis pathways.",
-		category: "science",
-		keywords: ["Chemistry", "Organic"],
-		fileType: "png",
-		uploaderId: "user-1",
-		uploaderName: "Dr. Sarah Chen",
-		status: "approved",
-		createdAt: "2025-01-28T13:30:00Z",
-		downloadCount: 920,
-		viewCount: 2300,
-	},
-];
+type MaterialWithUploader = Material & {
+	uploader: Pick<User, "id" | "name" | "email">;
+};
 
 export default function LibraryPage() {
+	const [materials, setMaterials] = useState<MaterialWithUploader[]>([]);
+	const [totalCount, setTotalCount] = useState(0);
+	const [loading, setLoading] = useState(true);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [sortBy, setSortBy] = useState("recent");
 	const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-	const filteredMaterials = MOCK_MATERIALS.filter((material) => {
-		const matchesSearch =
-			searchQuery === "" ||
-			material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			material.description.toLowerCase().includes(searchQuery.toLowerCase());
+	const debouncedSearch = useDebounce(searchQuery, 300);
 
-		const matchesCategory =
-			selectedCategories.length === 0 ||
-			selectedCategories.includes(material.category);
+	useEffect(() => {
+		const loadMaterials = async () => {
+			setLoading(true);
+			try {
+				const result = await getMaterials({
+					searchQuery: debouncedSearch,
+					categories:
+						selectedCategories.length > 0 ? selectedCategories : undefined,
+					sortBy: sortBy as "recent" | "popular" | "views",
+				});
 
-		return matchesSearch && matchesCategory;
-	});
+				if (result.success && result.data) {
+					setMaterials(result.data.materials);
+					setTotalCount(result.data.total);
+				} else {
+					toast.error(result.error || "Failed to load materials");
+				}
+			} catch (error) {
+				console.error("Failed to load materials:", error);
+				toast.error("Failed to load materials. Please try again.");
+			} finally {
+				setLoading(false);
+			}
+		};
 
-	const sortedMaterials = [...filteredMaterials].sort((a, b) => {
-		switch (sortBy) {
-			case "popular":
-				return b.downloadCount - a.downloadCount;
-			case "views":
-				return b.viewCount - a.viewCount;
-			case "recent":
-			default:
-				return (
-					new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-				);
-		}
-	});
+		loadMaterials();
+	}, [debouncedSearch, selectedCategories, sortBy]);
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -142,8 +63,9 @@ export default function LibraryPage() {
 					<div>
 						<h1 className="mb-2 text-4xl font-bold">Library</h1>
 						<p className="text-muted-foreground">
-							Explore {MOCK_MATERIALS.length} high-quality learning materials
-							across STEAM disciplines
+							{loading
+								? "Loading materials..."
+								: `Explore ${totalCount} high-quality learning materials across STEAM disciplines`}
 						</p>
 					</div>
 					<Button asChild>
@@ -165,7 +87,11 @@ export default function LibraryPage() {
 				/>
 
 				<div className="mt-6">
-					<MaterialCards materials={sortedMaterials} viewMode={viewMode} />
+					{loading ? (
+						<MaterialCardsSkeleton viewMode={viewMode} count={6} />
+					) : (
+						<MaterialCards materials={materials} viewMode={viewMode} />
+					)}
 				</div>
 			</div>
 		</div>

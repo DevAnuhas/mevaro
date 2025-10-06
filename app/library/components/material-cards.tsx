@@ -11,32 +11,22 @@ import {
 	ImageIcon,
 } from "lucide-react";
 import Link from "next/link";
+import type { Material, User as PrismaUser } from "@prisma/client";
+
+type MaterialWithUploader = Material & {
+	uploader: Pick<PrismaUser, "id" | "name" | "email">;
+};
 
 const STEAM_CATEGORIES = [
-	{ id: "science", name: "Science", color: "oklch(0.55 0.20 150)" },
-	{ id: "technology", name: "Technology", color: "oklch(0.60 0.18 220)" },
-	{ id: "engineering", name: "Engineering", color: "oklch(0.65 0.15 30)" },
-	{ id: "arts", name: "Arts", color: "oklch(0.50 0.22 280)" },
-	{ id: "mathematics", name: "Mathematics", color: "oklch(0.70 0.18 60)" },
+	{ id: "SCIENCE", name: "Science", color: "oklch(0.55 0.20 150)" },
+	{ id: "TECHNOLOGY", name: "Technology", color: "oklch(0.60 0.18 220)" },
+	{ id: "ENGINEERING", name: "Engineering", color: "oklch(0.65 0.15 30)" },
+	{ id: "ARTS", name: "Arts", color: "oklch(0.50 0.22 280)" },
+	{ id: "MATHEMATICS", name: "Mathematics", color: "oklch(0.70 0.18 60)" },
 ];
 
-interface Material {
-	id: string;
-	title: string;
-	description: string;
-	category: string;
-	keywords: string[];
-	fileType: string;
-	uploaderId: string;
-	uploaderName: string;
-	status: string;
-	createdAt: string;
-	downloadCount: number;
-	viewCount: number;
-}
-
 interface MaterialCardsProps {
-	materials: Material[];
+	materials: MaterialWithUploader[];
 	viewMode: "grid" | "list";
 }
 
@@ -76,7 +66,7 @@ export default function MaterialCards({
 										className="flex h-12 w-12 items-center justify-center rounded-lg"
 										style={{ backgroundColor: category?.color }}
 									>
-										{material.fileType === "pdf" ? (
+										{material.fileType.includes("pdf") ? (
 											<FileText className="h-6 w-6 text-white" />
 										) : (
 											<ImageIcon className="h-6 w-6 text-white" />
@@ -91,11 +81,11 @@ export default function MaterialCards({
 									{material.title}
 								</h3>
 								<p className="mb-4 line-clamp-3 text-sm text-muted-foreground leading-relaxed">
-									{material.description}
+									{material.description || "No description available"}
 								</p>
 
 								<div className="mb-4 flex flex-wrap gap-2">
-									{material.keywords.map((item) => (
+									{material.keywords.slice(0, 3).map((item) => (
 										<Badge key={item} variant="outline" className="text-xs">
 											{item}
 										</Badge>
@@ -105,7 +95,9 @@ export default function MaterialCards({
 								<div className="flex items-center justify-between border-t border-border mt-auto pt-4 text-xs text-muted-foreground">
 									<div className="flex items-center gap-1">
 										<User className="h-3 w-3" />
-										<span>{material.uploaderName}</span>
+										<span className="truncate max-w-[120px]">
+											{material.uploader.name}
+										</span>
 									</div>
 									<div className="flex items-center gap-3">
 										<div className="flex items-center gap-1">
@@ -129,7 +121,7 @@ export default function MaterialCards({
 									className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg"
 									style={{ backgroundColor: category?.color }}
 								>
-									{material.fileType === "pdf" ? (
+									{material.fileType.includes("pdf") ? (
 										<FileText className="h-8 w-8 text-white" />
 									) : (
 										<ImageIcon className="h-8 w-8 text-white" />
@@ -145,11 +137,11 @@ export default function MaterialCards({
 									</div>
 
 									<p className="mb-3 text-sm text-muted-foreground leading-relaxed">
-										{material.description}
+										{material.description || "No description available"}
 									</p>
 
 									<div className="mb-3 flex flex-wrap gap-2">
-										{material.keywords.map((item) => (
+										{material.keywords.slice(0, 5).map((item) => (
 											<Badge key={item} variant="outline" className="text-xs">
 												{item}
 											</Badge>
@@ -159,7 +151,7 @@ export default function MaterialCards({
 									<div className="flex items-center justify-between text-xs text-muted-foreground">
 										<div className="flex items-center gap-1">
 											<User className="h-3 w-3" />
-											<span>{material.uploaderName}</span>
+											<span>{material.uploader.name}</span>
 										</div>
 										<div className="flex items-center gap-4">
 											<div className="flex items-center gap-1">
