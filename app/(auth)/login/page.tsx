@@ -36,7 +36,7 @@ export default function LoginPage() {
 
 	return (
 		<div className="flex min-h-screen items-center justify-center px-6 py-12">
-			<div className="w-full max-w-md">
+			<div className="w-full max-w-sm">
 				<Card>
 					<CardHeader>
 						<CardTitle>Welcome to Mevaro</CardTitle>
@@ -59,7 +59,7 @@ export default function LoginPage() {
 							) : (
 								<>
 									<Image
-										src="/google-logo.png"
+										src="/google-logo.svg"
 										alt="Google Logo"
 										width={18}
 										height={18}

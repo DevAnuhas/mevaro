@@ -1,15 +1,36 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Search } from "lucide-react";
 import { UserMenu } from "./user-menu";
-import { getServerSession } from "@/lib/get-session";
 
-export async function Navigation() {
-	const session = await getServerSession();
-	const user = session?.user;
+interface Props {
+	user?: { name: string; email: string } | null | undefined;
+}
+
+export default function Navigation({ user }: Props) {
+	const [scrolled, setScrolled] = useState(false);
+
+	useEffect(() => {
+		const onScroll = () => {
+			setScrolled(window.scrollY > 10);
+		};
+
+		onScroll();
+		window.addEventListener("scroll", onScroll, { passive: true });
+		return () => window.removeEventListener("scroll", onScroll);
+	}, []);
 
 	return (
-		<nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg">
+		<nav
+			className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
+				scrolled
+					? "border-b bg-background/80 backdrop-blur-lg"
+					: "border-b-transparent bg-transparent"
+			}`}
+		>
 			<div className="container mx-auto flex items-center justify-between px-6 py-4">
 				<Link href="/" className="flex items-center gap-2">
 					<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">

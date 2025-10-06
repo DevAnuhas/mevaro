@@ -11,12 +11,14 @@ import {
 	Zap,
 	TrendingUp,
 } from "lucide-react";
+import { Spotlight } from "@/components/ui/spotlight-new";
 
 export default function HomePage() {
 	return (
 		<div className="min-h-screen">
 			{/* Hero Section */}
 			<section className="container mx-auto px-6 pt-32 pb-20">
+				<Spotlight />
 				<div className="mx-auto max-w-4xl text-center">
 					<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm text-primary">
 						<Sparkles className="h-4 w-4" />
