@@ -42,8 +42,34 @@ export async function getMaterialById(id: string) {
     }
 }
 
-export async function incrementViewCount(id: string) {
+export async function incrementViewCount(id: string, fingerprint?: string, userId?: string) {
     try {
+        // Check if this view already exists (to prevent duplicate counting)
+        const existingView = await prisma.view.findFirst({
+            where: {
+                materialId: id,
+                OR: [
+                    userId ? { userId } : {},
+                    fingerprint ? { fingerprint } : {},
+                ].filter(condition => Object.keys(condition).length > 0),
+            },
+        });
+
+        // If view already exists, don't increment
+        if (existingView) {
+            return { success: true, alreadyViewed: true };
+        }
+
+        // Create new view record
+        await prisma.view.create({
+            data: {
+                materialId: id,
+                ...(userId && { userId }),
+                ...(fingerprint && { fingerprint }),
+            },
+        });
+
+        // Increment the view count on the material
         await prisma.material.update({
             where: { id },
             data: {
@@ -53,7 +79,7 @@ export async function incrementViewCount(id: string) {
             },
         });
 
-        return { success: true };
+        return { success: true, alreadyViewed: false };
     } catch (error) {
         console.error("Failed to increment view count:", error);
         return {

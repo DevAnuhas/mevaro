@@ -21,6 +21,7 @@ import { AILessonPlan } from "./components/ai-lesson-plan";
 import { getMaterialById } from "./actions";
 import { DownloadButton } from "./components/download-button";
 import { ViewTracker } from "./components/view-tracker";
+import { getServerSession } from "@/lib/get-session";
 
 const STEAM_CATEGORIES = {
 	SCIENCE: { name: "Science", color: "bg-green-500" },
@@ -45,9 +46,13 @@ export default async function MaterialPage({
 	const category =
 		STEAM_CATEGORIES[material.category as keyof typeof STEAM_CATEGORIES];
 
+	// Get the current user session for view tracking
+	const session = await getServerSession();
+	const userId = session?.user?.id;
+
 	return (
 		<div className="min-h-screen bg-background">
-			<ViewTracker materialId={material.id} />
+			<ViewTracker materialId={material.id} userId={userId} />
 			<div className="container mx-auto px-6 pt-24 pb-12">
 				{/* Header */}
 				<div className="mb-8">
