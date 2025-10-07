@@ -8,7 +8,10 @@ import { Toaster } from "@/components/ui/sonner";
 import { getServerSession } from "@/lib/get-session";
 
 export const metadata: Metadata = {
-	title: "Mevaro - AI-Powered Digital Knowledge Platform",
+	title: {
+		default: "Mevaro - AI-Powered Digital Knowledge Platform",
+		template: "%s – Mevaro",
+	},
 	description:
 		"Empower learners and educators with AI-driven STEAM learning materials. Share, discover, and learn with intelligent educational resources.",
 };

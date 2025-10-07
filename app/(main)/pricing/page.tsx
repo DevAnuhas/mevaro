@@ -2,6 +2,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Check, Sparkles, Zap, Crown, Info } from "lucide-react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Pricing",
+	description:
+		"Choose the perfect plan for your learning journey. From free to enterprise, get access to AI-powered educational resources and features.",
+};
 
 export default function PricingPage() {
 	const plans = [

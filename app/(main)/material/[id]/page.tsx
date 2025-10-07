@@ -22,6 +22,7 @@ import { getMaterialById } from "./actions";
 import { DownloadButton } from "./components/download-button";
 import { ViewTracker } from "./components/view-tracker";
 import { getServerSession } from "@/lib/get-session";
+import type { Metadata } from "next";
 
 const STEAM_CATEGORIES = {
 	SCIENCE: { name: "Science", color: "bg-green-500" },
@@ -30,6 +31,32 @@ const STEAM_CATEGORIES = {
 	ARTS: { name: "Arts", color: "bg-purple-500" },
 	MATHEMATICS: { name: "Mathematics", color: "bg-red-500" },
 };
+
+export async function generateMetadata({
+	params,
+}: {
+	params: { id: string };
+}): Promise<Metadata> {
+	const result = await getMaterialById(params.id);
+
+	if (!result.success || !result.data) {
+		return {
+			title: "Material Not Found",
+			description: "The requested educational material could not be found.",
+		};
+	}
+
+	const material = result.data;
+	const category =
+		STEAM_CATEGORIES[material.category as keyof typeof STEAM_CATEGORIES];
+
+	return {
+		title: material.title,
+		description:
+			material.description ||
+			`${category.name} educational material - ${material.title}`,
+	};
+}
 
 export default async function MaterialPage({
 	params,

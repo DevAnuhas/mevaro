@@ -1,4 +1,15 @@
 import { UploadForm } from "./components/upload-form";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Upload Material",
+	description:
+		"Share your educational resources with the Mevaro community. Upload STEAM learning materials for review and publication.",
+	robots: {
+		index: false,
+		follow: false,
+	},
+};
 
 export default function UploadPage() {
 	return (

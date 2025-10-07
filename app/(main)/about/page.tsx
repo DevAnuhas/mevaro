@@ -17,6 +17,13 @@ import {
 	Palette,
 	Wrench,
 } from "lucide-react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "About",
+	description:
+		"Learn about Mevaro's mission to empower education through AI and collaboration. Making quality educational resources accessible to everyone.",
+};
 
 export default function AboutPage() {
 	return (
