@@ -9,6 +9,13 @@ import { UserMenu } from "./user-menu";
 import { User as UserType } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
+const navLinks = [
+	{ href: "/", label: "Home" },
+	{ href: "/library", label: "Library" },
+	{ href: "/about", label: "About" },
+	{ href: "/pricing", label: "Pricing" },
+];
+
 export default function Navigation({ user }: { user?: UserType }) {
 	const pathname = usePathname();
 	const isHomePage = pathname === "/";
@@ -43,42 +50,18 @@ export default function Navigation({ user }: { user?: UserType }) {
 				</Link>
 
 				<div className="hidden items-center md:flex gap-2">
-					<Link
-						href="/"
-						className={cn(
-							"text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg",
-							pathname === "/" && "text-foreground bg-accent"
-						)}
-					>
-						Home
-					</Link>
-					<Link
-						href="/library"
-						className={cn(
-							"text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg",
-							pathname === "/library" && "text-foreground bg-accent"
-						)}
-					>
-						Library
-					</Link>
-					<Link
-						href="/about"
-						className={cn(
-							"text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg",
-							pathname === "/about" && "text-foreground bg-accent"
-						)}
-					>
-						About
-					</Link>
-					<Link
-						href="/pricing"
-						className={cn(
-							"text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg",
-							pathname === "/pricing" && "text-foreground bg-accent"
-						)}
-					>
-						Pricing
-					</Link>
+					{navLinks.map((link) => (
+						<Link
+							key={link.href}
+							href={link.href}
+							className={cn(
+								"text-sm text-muted-foreground transition-colors hover:text-foreground hover:bg-accent py-2 px-4 rounded-lg",
+								pathname === link.href && "text-foreground bg-accent"
+							)}
+						>
+							{link.label}
+						</Link>
+					))}
 				</div>
 
 				<div className="flex items-center gap-3">
