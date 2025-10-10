@@ -37,19 +37,22 @@ export function AISummarization({ materialId }: { materialId: string }) {
 					<span>Failed to generate summary. Please try again.</span>
 				</div>
 			)}
-			{isLoading && !completion && (
-				<>
-					<div className="space-y-3">
-						<div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-							<Sparkles className="h-4 w-4 animate-pulse" />
-							<span>Analyzing material and generating summary...</span>
-						</div>
-						<Skeleton className="h-4 w-full" />
-						<Skeleton className="h-4 w-full" />
-						<Skeleton className="h-4 w-3/4" />
-					</div>
-				</>
+
+			{isLoading && (
+				<div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+					<Sparkles className="h-4 w-4 animate-pulse" />
+					<span>Analyzing material and generating summary...</span>
+				</div>
 			)}
+
+			{isLoading && !completion && (
+				<div className="space-y-3">
+					<Skeleton className="h-4 w-full" />
+					<Skeleton className="h-4 w-full" />
+					<Skeleton className="h-4 w-3/4" />
+				</div>
+			)}
+
 			{!isLoading && !completion && (
 				<div className="space-y-3">
 					<p className="text-sm text-muted-foreground">
@@ -65,27 +68,19 @@ export function AISummarization({ materialId }: { materialId: string }) {
 					</Button>
 				</div>
 			)}
+
 			{completion && (
 				<div className="space-y-4">
-					{stats && (
+					{!isLoading && stats && (
 						<div className="flex items-center gap-4 text-sm text-muted-foreground border-b pb-3">
-							{isLoading ? (
-								<>
-									<Sparkles className="h-4 w-4 -mr-2 animate-pulse" />
-									<span>Analyzing material and generating summary...</span>
-								</>
-							) : (
-								<>
-									<div className="flex items-center gap-1.5">
-										<FileText className="h-4 w-4" />
-										<span>{stats.wordCount} words</span>
-									</div>
-									<div className="flex items-center gap-1.5">
-										<Clock className="h-4 w-4" />
-										<span>{stats.readingTime} min read</span>
-									</div>
-								</>
-							)}
+							<div className="flex items-center gap-1.5">
+								<FileText className="h-4 w-4" />
+								<span>{stats.wordCount} words</span>
+							</div>
+							<div className="flex items-center gap-1.5">
+								<Clock className="h-4 w-4" />
+								<span>{stats.readingTime} min read</span>
+							</div>
 						</div>
 					)}
 
