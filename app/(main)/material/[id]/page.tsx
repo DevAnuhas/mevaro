@@ -16,7 +16,6 @@ import { MaterialViewer } from "./components/material-viewer";
 import { AISummarization } from "./components/ai-summarization";
 import { AIQuizGenerator } from "./components/ai-quiz-generator";
 import { AIChatbot } from "./components/ai-chatbot";
-import { AIConceptExtraction } from "./components/ai-concept-extraction";
 import { AILessonPlan } from "./components/ai-lesson-plan";
 import { getMaterialById } from "./actions";
 import { DownloadButton } from "./components/download-button";
@@ -171,11 +170,10 @@ export default async function MaterialPage({
 							</div>
 
 							<Tabs defaultValue="summarize" className="w-full">
-								<TabsList className="grid w-full grid-cols-3 lg:grid-cols-5">
+								<TabsList className="grid w-full grid-cols-4">
 									<TabsTrigger value="summarize">Summary</TabsTrigger>
 									<TabsTrigger value="quiz">Quiz</TabsTrigger>
 									<TabsTrigger value="chat">Chat</TabsTrigger>
-									<TabsTrigger value="concepts">Concepts</TabsTrigger>
 									<TabsTrigger value="lesson">Lesson</TabsTrigger>
 								</TabsList>
 
@@ -189,10 +187,6 @@ export default async function MaterialPage({
 
 								<TabsContent value="chat" className="mt-4">
 									<AIChatbot materialId={material.id} />
-								</TabsContent>
-
-								<TabsContent value="concepts" className="mt-4">
-									<AIConceptExtraction materialId={material.id} />
 								</TabsContent>
 
 								<TabsContent value="lesson" className="mt-4">
