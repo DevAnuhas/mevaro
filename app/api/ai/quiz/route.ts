@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
 
         // Generate quiz using structured output
         const result = await generateObject({
-            model: google('gemini-2.5-flash'),
+            model: google('gemini-2.0-flash-exp'),
             messages: [
                 {
                     role: 'user',
