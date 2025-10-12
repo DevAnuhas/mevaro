@@ -66,7 +66,7 @@ export default function MaterialCards({
 										className="flex h-12 w-12 items-center justify-center rounded-lg"
 										style={{ backgroundColor: category?.color }}
 									>
-										{material.fileType.includes("pdf") ? (
+										{material.fileType.toLowerCase().includes("pdf") ? (
 											<FileText className="h-6 w-6 text-white" />
 										) : (
 											<ImageIcon className="h-6 w-6 text-white" />

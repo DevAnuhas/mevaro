@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import LibraryFilters from "./components/library-filters";
 import MaterialCards from "./components/material-cards";
 import MaterialCardsSkeleton from "./components/material-cards-skeleton";
@@ -11,21 +11,69 @@ import { getMaterials } from "./actions";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import type { Material, User } from "@prisma/client";
 import { toast } from "sonner";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
 type MaterialWithUploader = Material & {
 	uploader: Pick<User, "id" | "name" | "email">;
 };
 
 export default function LibraryPage() {
+	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const searchInputRef = useRef<HTMLInputElement>(null);
 	const [materials, setMaterials] = useState<MaterialWithUploader[]>([]);
 	const [totalCount, setTotalCount] = useState(0);
 	const [loading, setLoading] = useState(true);
-	const [searchQuery, setSearchQuery] = useState("");
-	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-	const [sortBy, setSortBy] = useState("recent");
-	const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+	// Initialize state from URL search params
+	const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+	const [viewMode, setViewMode] = useState<"grid" | "list">(
+		(searchParams.get("view") as "grid" | "list") || "grid"
+	);
+	const [sortBy, setSortBy] = useState(searchParams.get("sort") || "recent");
+	const [selectedCategories, setSelectedCategories] = useState<string[]>(
+		searchParams.get("categories")?.split(",").filter(Boolean) || []
+	);
 
 	const debouncedSearch = useDebounce(searchQuery, 300);
+
+	// Update URL search params when filters change
+	useEffect(() => {
+		const params = new URLSearchParams();
+
+		if (searchQuery) {
+			params.set("q", searchQuery);
+		}
+
+		if (selectedCategories.length > 0) {
+			params.set("categories", selectedCategories.join(","));
+		}
+
+		if (sortBy !== "recent") {
+			params.set("sort", sortBy);
+		}
+
+		if (viewMode !== "grid") {
+			params.set("view", viewMode);
+		}
+
+		const newUrl = params.toString()
+			? `${pathname}?${params.toString()}`
+			: pathname;
+
+		router.push(newUrl, { scroll: false });
+	}, [searchQuery, selectedCategories, sortBy, viewMode, pathname, router]);
+
+	// Handle auto-focus when navigating from search button
+	useEffect(() => {
+		if (searchParams.get("focus") === "search" && searchInputRef.current) {
+			// Small delay to ensure the page is fully rendered
+			setTimeout(() => {
+				searchInputRef.current?.focus();
+			}, 100);
+		}
+	}, [searchParams]);
 
 	useEffect(() => {
 		const loadMaterials = async () => {
@@ -84,6 +132,7 @@ export default function LibraryPage() {
 					onSortChange={setSortBy}
 					viewMode={viewMode}
 					onViewModeChange={setViewMode}
+					searchInputRef={searchInputRef}
 				/>
 
 				<div className="mt-6">

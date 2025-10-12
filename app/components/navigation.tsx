@@ -65,8 +65,15 @@ export default function Navigation({ user }: { user?: UserType }) {
 				</div>
 
 				<div className="flex items-center gap-3">
-					<Button variant="ghost" size="icon" className="hidden md:flex">
-						<Search className="h-4 w-4" />
+					<Button
+						variant="ghost"
+						size="icon"
+						className="hidden md:flex"
+						asChild
+					>
+						<Link href="/library?focus=search">
+							<Search className="h-4 w-4" />
+						</Link>
 					</Button>
 					{user ? (
 						<UserMenu user={user} />

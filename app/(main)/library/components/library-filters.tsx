@@ -36,6 +36,7 @@ interface LibraryFiltersProps {
 	onSortChange: (sort: string) => void;
 	viewMode: "grid" | "list";
 	onViewModeChange: (mode: "grid" | "list") => void;
+	searchInputRef?: React.RefObject<HTMLInputElement>;
 }
 
 export default function LibraryFilters({
@@ -47,6 +48,7 @@ export default function LibraryFilters({
 	onSortChange,
 	viewMode,
 	onViewModeChange,
+	searchInputRef,
 }: LibraryFiltersProps) {
 	const toggleCategory = (categoryId: string) => {
 		const newCategories = selectedCategories.includes(categoryId)
@@ -66,6 +68,7 @@ export default function LibraryFilters({
 			<div className="relative">
 				<Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
 				<Input
+					ref={searchInputRef}
 					type="text"
 					placeholder="Search materials with AI-powered search..."
 					value={searchQuery}
