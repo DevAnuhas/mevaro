@@ -25,6 +25,9 @@ export default function LibraryPage() {
 	const [materials, setMaterials] = useState<MaterialWithUploader[]>([]);
 	const [totalCount, setTotalCount] = useState(0);
 	const [loading, setLoading] = useState(true);
+	const [searchType, setSearchType] = useState<"semantic" | "traditional">(
+		"traditional"
+	);
 
 	// Initialize state from URL search params
 	const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
@@ -87,8 +90,9 @@ export default function LibraryPage() {
 				});
 
 				if (result.success && result.data) {
-					setMaterials(result.data.materials);
+					setMaterials(result.data.materials as MaterialWithUploader[]);
 					setTotalCount(result.data.total);
+					setSearchType(result.data.searchType as "semantic" | "traditional");
 				} else {
 					toast.error(result.error || "Failed to load materials");
 				}
@@ -114,6 +118,11 @@ export default function LibraryPage() {
 							{loading
 								? "Loading materials..."
 								: `Explore ${totalCount} high-quality learning materials across STEAM disciplines`}
+							{!loading && searchQuery && searchType === "semantic" && (
+								<span className="ml-2 text-xs text-primary">
+									✨ AI-powered search
+								</span>
+							)}
 						</p>
 					</div>
 					<Button asChild>

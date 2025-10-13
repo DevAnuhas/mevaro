@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { MaterialStatus, Category } from "@prisma/client"
 import { getServerSession } from "@/lib/get-session"
+import { generateMaterialEmbedding } from "@/lib/embeddings"
 
 /**
  * List users with optional filtering, searching, sorting, and pagination
@@ -409,15 +410,59 @@ export async function approveMaterial(materialId: string) {
             }
         }
 
-        const material = await prisma.material.update({
-            where: {
-                id: materialId,
-            },
-            data: {
-                status: MaterialStatus.APPROVED,
-                approvedAt: new Date(),
+        // Get material data to generate embedding
+        const materialData = await prisma.material.findUnique({
+            where: { id: materialId },
+            select: {
+                title: true,
+                description: true,
+                keywords: true,
             },
         })
+
+        if (!materialData) {
+            return {
+                success: false,
+                error: "Material not found",
+            }
+        }
+
+        // Generate embedding for the material
+        let embedding: number[] | null = null;
+        try {
+            embedding = await generateMaterialEmbedding(
+                materialData.title,
+                materialData.description,
+                materialData.keywords
+            );
+        } catch (embeddingError) {
+            console.error("Error generating embedding:", embeddingError);
+            // Continue with approval even if embedding generation fails
+            // The embedding can be generated later
+        }
+
+        // Update material with approval status and embedding
+        if (embedding) {
+            // With embedding
+            const embeddingString = `[${embedding.join(',')}]`;
+            await prisma.$executeRaw`
+                UPDATE material
+                SET 
+                    status = ${MaterialStatus.APPROVED}::"MaterialStatus",
+                    "approvedAt" = ${new Date()},
+                    embedding = ${embeddingString}::vector
+                WHERE id = ${materialId}
+            `;
+        } else {
+            // Without embedding (if generation failed)
+            await prisma.$executeRaw`
+                UPDATE material
+                SET 
+                    status = ${MaterialStatus.APPROVED}::"MaterialStatus",
+                    "approvedAt" = ${new Date()}
+                WHERE id = ${materialId}
+            `;
+        }
 
         revalidatePath("/admin")
         revalidatePath("/library")
@@ -425,7 +470,6 @@ export async function approveMaterial(materialId: string) {
         return {
             success: true,
             message: "Material approved successfully",
-            data: material,
         }
     } catch (error) {
         console.error("Error approving material:", error)
