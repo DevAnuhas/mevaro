@@ -1,11 +1,13 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+  extensions = [vector]
 }
 
 model User {
@@ -94,6 +96,7 @@ model Material {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   approvedAt    DateTime?
+  embedding     Unsupported("vector(768)")?
 
   downloads Download[]
   views     View[]
