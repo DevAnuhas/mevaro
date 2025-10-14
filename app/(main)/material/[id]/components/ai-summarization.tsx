@@ -5,7 +5,13 @@ import { useCompletion } from "@ai-sdk/react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
-import { Sparkles, AlertCircle, Clock, FileText } from "lucide-react";
+import {
+	Sparkles,
+	AlertCircle,
+	Clock,
+	FileText,
+	RefreshCw,
+} from "lucide-react";
 import { estimateReadingTime } from "@/lib/ai-utils";
 
 export function AISummarization({ materialId }: { materialId: string }) {
@@ -46,7 +52,7 @@ export function AISummarization({ materialId }: { materialId: string }) {
 			)}
 
 			{isLoading && !completion && (
-				<div className="space-y-3">
+				<div className="space-y-4">
 					<Skeleton className="h-4 w-full" />
 					<Skeleton className="h-4 w-full" />
 					<Skeleton className="h-4 w-3/4" />
@@ -54,7 +60,7 @@ export function AISummarization({ materialId }: { materialId: string }) {
 			)}
 
 			{!isLoading && !completion && (
-				<div className="space-y-3">
+				<div className="space-y-4">
 					<p className="text-sm text-muted-foreground">
 						Generate a concise summary of this material using AI.
 					</p>
@@ -85,16 +91,17 @@ export function AISummarization({ materialId }: { materialId: string }) {
 					)}
 
 					<MarkdownRenderer content={completion} />
-
-					<Button
-						variant="outline"
-						onClick={handleGenerateSummary}
-						className="w-full gap-2 bg-transparent"
-						disabled={isLoading}
-					>
-						<Sparkles className="h-4 w-4" />
-						Regenerate
-					</Button>
+					{!isLoading && (
+						<Button
+							variant="outline"
+							onClick={handleGenerateSummary}
+							className="w-full gap-2 bg-transparent"
+							disabled={isLoading}
+						>
+							<RefreshCw className="mr-1 h-4 w-4" />
+							Regenerate
+						</Button>
+					)}
 				</div>
 			)}
 		</div>

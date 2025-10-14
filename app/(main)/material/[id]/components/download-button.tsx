@@ -52,7 +52,7 @@ export function DownloadButton({
 
 	return (
 		<Button
-			size="lg"
+			variant="outline"
 			className="gap-2"
 			onClick={handleDownload}
 			disabled={isDownloading}

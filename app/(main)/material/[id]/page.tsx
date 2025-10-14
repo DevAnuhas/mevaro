@@ -22,6 +22,7 @@ import { DownloadButton } from "./components/download-button";
 import { ViewTracker } from "./components/view-tracker";
 import { getServerSession } from "@/lib/get-session";
 import type { Metadata } from "next";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const STEAM_CATEGORIES = {
 	SCIENCE: { name: "Science", color: "bg-green-500" },
@@ -79,7 +80,7 @@ export default async function MaterialPage({
 	return (
 		<div className="min-h-screen bg-background">
 			<ViewTracker materialId={material.id} userId={userId} />
-			<div className="container mx-auto px-6 pt-24 pb-12">
+			<div className="container max-w-7xl mx-auto px-6 pt-24 pb-12">
 				{/* Header */}
 				<div className="mb-8">
 					<div className="flex items-start justify-between gap-4 mb-4">
@@ -178,11 +179,15 @@ export default async function MaterialPage({
 								</TabsList>
 
 								<TabsContent value="summarize" className="mt-4">
-									<AISummarization materialId={material.id} />
+									<ScrollArea className="h-[600px] rounded-md border p-4">
+										<AISummarization materialId={material.id} />
+									</ScrollArea>
 								</TabsContent>
 
 								<TabsContent value="quiz" className="mt-4">
-									<AIQuizGenerator materialId={material.id} />
+									<ScrollArea className="h-[600px] rounded-md border p-4">
+										<AIQuizGenerator materialId={material.id} />
+									</ScrollArea>
 								</TabsContent>
 
 								<TabsContent value="chat" className="mt-4">
@@ -190,7 +195,9 @@ export default async function MaterialPage({
 								</TabsContent>
 
 								<TabsContent value="lesson" className="mt-4">
-									<AILessonPlan materialId={material.id} />
+									<ScrollArea className="h-[600px] rounded-md border p-4">
+										<AILessonPlan materialId={material.id} />
+									</ScrollArea>
 								</TabsContent>
 							</Tabs>
 						</Card>

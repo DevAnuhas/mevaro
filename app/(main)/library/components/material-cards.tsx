@@ -49,7 +49,7 @@ export default function MaterialCards({
 			className={
 				viewMode === "grid"
 					? "grid gap-6 lg:grid-cols-3 sm:grid-cols-2"
-					: "space-y-4"
+					: "grid space-y-6"
 			}
 		>
 			{materials.map((material) => {

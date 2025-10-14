@@ -103,7 +103,7 @@ export function MaterialViewer({
 		<div className="space-y-4">
 			{/* Viewer Controls */}
 			<div className="flex items-center justify-between flex-wrap gap-2">
-				{isPdf && (
+				{/* {isPdf && (
 					<div className="flex items-center gap-2">
 						<Button
 							variant="outline"
@@ -121,7 +121,7 @@ export function MaterialViewer({
 							<ChevronRight className="h-4 w-4" />
 						</Button>
 					</div>
-				)}
+				)} */}
 
 				<div className="flex items-center gap-2 ml-auto">
 					{isImage && (

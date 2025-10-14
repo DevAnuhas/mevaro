@@ -90,11 +90,13 @@ export function AIQuizGenerator({ materialId }: AIQuizGeneratorProps) {
 					<Skeleton className="h-24 w-full" />
 					<Skeleton className="h-24 w-full" />
 					<Skeleton className="h-24 w-full" />
+					<Skeleton className="h-24 w-full" />
+					<Skeleton className="h-24 w-full" />
 				</div>
 			)}
 
 			{!isLoading && !quiz && (
-				<div className="space-y-3">
+				<div className="space-y-4">
 					<p className="text-sm text-muted-foreground">
 						Generate a quiz to test your understanding of this material.
 					</p>
@@ -169,7 +171,7 @@ export function AIQuizGenerator({ materialId }: AIQuizGeneratorProps) {
 							Submit Quiz
 						</Button>
 					) : (
-						<div className="space-y-3">
+						<div className="space-y-4">
 							<Card className="p-4 bg-primary text-primary-foreground">
 								<p className="text-center text-lg font-semibold">
 									Score: {score} / {quiz.length}

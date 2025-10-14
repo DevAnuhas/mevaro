@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card } from "@/components/ui/card"
-import { Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
+import { Sparkles, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 
 interface LessonSection {
 	title: string;
@@ -76,11 +76,12 @@ export function AILessonPlan({ materialId }: AILessonPlanProps) {
 					<Skeleton className="h-32 w-full" />
 					<Skeleton className="h-32 w-full" />
 					<Skeleton className="h-32 w-full" />
+					<Skeleton className="h-32 w-full" />
 				</div>
 			)}
 
 			{!isLoading && !lessonPlan && (
-				<div className="space-y-3">
+				<div className="space-y-4">
 					<p className="text-sm text-muted-foreground">
 						Generate a structured lesson plan or study guide based on this
 						material.
@@ -137,7 +138,7 @@ export function AILessonPlan({ materialId }: AILessonPlanProps) {
 						onClick={generateLessonPlan}
 						className="w-full gap-2 bg-transparent"
 					>
-						<Sparkles className="h-4 w-4" />
+						<RefreshCw className="h-4 w-4" />
 						Regenerate Lesson Plan
 					</Button>
 				</div>
