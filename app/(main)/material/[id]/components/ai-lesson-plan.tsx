@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Card } from "@/components/ui/card"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
 import { Sparkles, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { useAIToolStorage } from "@/lib/hooks/use-local-storage";
 
 interface LessonSection {
 	title: string;
@@ -22,9 +23,22 @@ interface AILessonPlanProps {
 }
 
 export function AILessonPlan({ materialId }: AILessonPlanProps) {
-	const [lessonPlan, setLessonPlan] = useState<LessonPlanData | null>(null);
+	// Cache lesson plan in localStorage
+	const [cachedLessonPlan, setCachedLessonPlan] =
+		useAIToolStorage<LessonPlanData | null>("lesson-plan", materialId, null);
+
+	const [lessonPlan, setLessonPlan] = useState<LessonPlanData | null>(
+		cachedLessonPlan
+	);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+
+	// Update cache whenever lesson plan changes
+	useEffect(() => {
+		if (lessonPlan && !isLoading) {
+			setCachedLessonPlan(lessonPlan);
+		}
+	}, [lessonPlan, isLoading, setCachedLessonPlan]);
 
 	const generateLessonPlan = async () => {
 		setIsLoading(true);
@@ -76,7 +90,7 @@ export function AILessonPlan({ materialId }: AILessonPlanProps) {
 					<Skeleton className="h-32 w-full" />
 					<Skeleton className="h-32 w-full" />
 					<Skeleton className="h-32 w-full" />
-					<Skeleton className="h-32 w-full" />
+					<Skeleton className="h-28 w-full" />
 				</div>
 			)}
 

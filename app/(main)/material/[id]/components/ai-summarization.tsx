@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useCompletion } from "@ai-sdk/react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,12 +13,36 @@ import {
 	RefreshCw,
 } from "lucide-react";
 import { estimateReadingTime } from "@/lib/ai-utils";
+import { useAIToolStorage } from "@/lib/hooks/use-local-storage";
 
 export function AISummarization({ materialId }: { materialId: string }) {
-	const { completion, error, isLoading, complete } = useCompletion({
-		api: "/api/ai/summarize",
-		body: { materialId },
-	});
+	// Cache summary in localStorage
+	const [cachedSummary, setCachedSummary] = useAIToolStorage<string>(
+		"summary",
+		materialId,
+		""
+	);
+
+	const { completion, error, isLoading, complete, setCompletion } =
+		useCompletion({
+			api: "/api/ai/summarize",
+			body: { materialId },
+		});
+
+	// Restore cached summary on mount
+	useEffect(() => {
+		if (cachedSummary && !completion) {
+			setCompletion(cachedSummary);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	// Update cache whenever completion changes
+	useEffect(() => {
+		if (completion && !isLoading) {
+			setCachedSummary(completion);
+		}
+	}, [completion, isLoading, setCachedSummary]);
 
 	const handleGenerateSummary = async () => {
 		console.log("Starting summary generation for material:", materialId);

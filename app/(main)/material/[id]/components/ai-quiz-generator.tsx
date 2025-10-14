@@ -1,12 +1,19 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Label } from "@/components/ui/label"
-import { Card } from "@/components/ui/card"
-import { Sparkles, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import {
+	Sparkles,
+	CheckCircle2,
+	XCircle,
+	AlertCircle,
+	RefreshCw,
+} from "lucide-react";
+import { useAIToolStorage } from "@/lib/hooks/use-local-storage";
 
 interface Question {
 	id: number;
@@ -16,16 +23,46 @@ interface Question {
 	explanation?: string;
 }
 
+interface QuizState {
+	quiz: Question[] | null;
+	answers: Record<number, number>;
+	submitted: boolean;
+}
+
 interface AIQuizGeneratorProps {
 	materialId: string;
 }
 
 export function AIQuizGenerator({ materialId }: AIQuizGeneratorProps) {
-	const [quiz, setQuiz] = useState<Question[] | null>(null);
+	// Cache quiz state in localStorage
+	const [cachedQuizState, setCachedQuizState] = useAIToolStorage<QuizState>(
+		"quiz",
+		materialId,
+		{ quiz: null, answers: {}, submitted: false }
+	);
+
+	const [quiz, setQuiz] = useState<Question[] | null>(cachedQuizState.quiz);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [answers, setAnswers] = useState<Record<number, number>>({});
-	const [submitted, setSubmitted] = useState(false);
+	const [answers, setAnswers] = useState<Record<number, number>>(
+		cachedQuizState.answers
+	);
+	const [submitted, setSubmitted] = useState(cachedQuizState.submitted);
+
+	// Update cache whenever quiz state changes
+	useEffect(() => {
+		if (quiz !== null || Object.keys(answers).length > 0 || submitted) {
+			const newState = { quiz, answers, submitted };
+			const newStateStr = JSON.stringify(newState);
+			const currentStateStr = JSON.stringify(cachedQuizState);
+
+			// Only update cache if it's actually different
+			if (newStateStr !== currentStateStr) {
+				setCachedQuizState(newState);
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [quiz, answers, submitted]);
 
 	const generateQuiz = async () => {
 		setIsLoading(true);
@@ -182,7 +219,7 @@ export function AIQuizGenerator({ materialId }: AIQuizGeneratorProps) {
 								onClick={generateQuiz}
 								className="w-full gap-2 bg-transparent"
 							>
-								<Sparkles className="h-4 w-4" />
+								<RefreshCw className="h-4 w-4" />
 								Generate New Quiz
 							</Button>
 						</div>
