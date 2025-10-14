@@ -177,3 +177,57 @@ export async function getRecentActivity(userId: string, limit: number = 5) {
         };
     }
 }
+
+export async function getFavoritedMaterials(userId: string) {
+    try {
+        const favorites = await prisma.favorite.findMany({
+            where: {
+                userId,
+            },
+            include: {
+                material: {
+                    include: {
+                        uploader: {
+                            select: {
+                                name: true,
+                                image: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+
+        return {
+            success: true,
+            data: favorites.map((fav) => ({
+                id: fav.material.id,
+                title: fav.material.title,
+                description: fav.material.description,
+                category: fav.material.category,
+                fileType: fav.material.fileType,
+                viewCount: fav.material.viewCount,
+                downloadCount: fav.material.downloadCount,
+                keywords: fav.material.keywords,
+                createdAt: fav.material.createdAt.toISOString(),
+                favoritedAt: fav.createdAt.toISOString(),
+                uploader: {
+                    name: fav.material.uploader.name,
+                    image: fav.material.uploader.image,
+                },
+            })),
+        };
+    } catch (error) {
+        console.error("Error fetching favorited materials:", error);
+        return {
+            success: false,
+            error:
+                error instanceof Error
+                    ? error.message
+                    : "Failed to fetch favorited materials",
+        };
+    }
+}

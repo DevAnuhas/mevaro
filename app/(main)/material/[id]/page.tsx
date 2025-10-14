@@ -17,8 +17,10 @@ import { AISummarization } from "./components/ai-summarization";
 import { AIQuizGenerator } from "./components/ai-quiz-generator";
 import { AIChatbot } from "./components/ai-chatbot";
 import { AILessonPlan } from "./components/ai-lesson-plan";
-import { getMaterialById } from "./actions";
+import { getMaterialById, checkIfFavorited } from "./actions";
 import { DownloadButton } from "./components/download-button";
+import { FavoriteButton } from "./components/favorite-button";
+import { ShareButton } from "./components/share-button";
 import { ViewTracker } from "./components/view-tracker";
 import { getServerSession } from "@/lib/get-session";
 import type { Metadata } from "next";
@@ -77,6 +79,10 @@ export default async function MaterialPage({
 	const session = await getServerSession();
 	const userId = session?.user?.id;
 
+	// Check if material is favorited
+	const favoriteResult = await checkIfFavorited(material.id, userId);
+	const isFavorited = favoriteResult.isFavorited || false;
+
 	return (
 		<div className="min-h-screen bg-background">
 			<ViewTracker materialId={material.id} userId={userId} />
@@ -90,12 +96,23 @@ export default async function MaterialPage({
 								{material.description || "No description available"}
 							</p>
 						</div>
-						<DownloadButton
-							materialId={material.id}
-							fileUrl={material.fileUrl}
-							fileName={`${material.title}.${material.fileType}`}
-							userId={userId}
-						/>
+						<div className="flex items-end gap-2">
+							<DownloadButton
+								materialId={material.id}
+								fileUrl={material.fileUrl}
+								fileName={`${material.title}.${material.fileType}`}
+								userId={userId}
+							/>
+							<ShareButton
+								materialId={material.id}
+								materialTitle={material.title}
+							/>
+							<FavoriteButton
+								materialId={material.id}
+								userId={userId}
+								initialIsFavorited={isFavorited}
+							/>
+						</div>
 					</div>
 
 					{/* Metadata */}

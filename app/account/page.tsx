@@ -18,13 +18,35 @@ import {
 	Legend,
 	Tooltip,
 } from "recharts";
-import { Upload, Download, FileText, Calendar, TrendingUp } from "lucide-react";
+import {
+	Upload,
+	Download,
+	FileText,
+	Calendar,
+	TrendingUp,
+	Heart,
+	Eye,
+	User,
+	ImageIcon,
+} from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { Spinner } from "@/components/ui/spinner";
-import { getUserStats, getRecentActivity } from "./actions";
+import {
+	getUserStats,
+	getRecentActivity,
+	getFavoritedMaterials,
+} from "./actions";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+
+const STEAM_CATEGORIES = [
+	{ id: "SCIENCE", name: "Science", color: "oklch(0.55 0.20 150)" },
+	{ id: "TECHNOLOGY", name: "Technology", color: "oklch(0.60 0.18 220)" },
+	{ id: "ENGINEERING", name: "Engineering", color: "oklch(0.65 0.15 30)" },
+	{ id: "ARTS", name: "Arts", color: "oklch(0.50 0.22 280)" },
+	{ id: "MATHEMATICS", name: "Mathematics", color: "oklch(0.70 0.18 60)" },
+];
 
 export default function AccountDashboard() {
 	const { data: session } = useSession();
@@ -45,6 +67,24 @@ export default function AccountDashboard() {
 			date: string;
 		}>
 	>([]);
+	const [favoritedMaterials, setFavoritedMaterials] = useState<
+		Array<{
+			id: string;
+			title: string;
+			description: string | null;
+			category: string;
+			fileType: string;
+			viewCount: number;
+			downloadCount: number;
+			createdAt: string;
+			favoritedAt: string;
+			keywords: string[];
+			uploader: {
+				name: string;
+				image: string | null;
+			};
+		}>
+	>([]);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
@@ -52,12 +92,16 @@ export default function AccountDashboard() {
 			Promise.all([
 				getUserStats(session.user.id),
 				getRecentActivity(session.user.id),
-			]).then(([statsResult, activityResult]) => {
+				getFavoritedMaterials(session.user.id),
+			]).then(([statsResult, activityResult, favoritesResult]) => {
 				if (statsResult.success && statsResult.data) {
 					setUserStats(statsResult.data);
 				}
 				if (activityResult.success && activityResult.data) {
 					setRecentActivity(activityResult.data);
+				}
+				if (favoritesResult.success && favoritesResult.data) {
+					setFavoritedMaterials(favoritesResult.data);
 				}
 				setLoading(false);
 			});
@@ -343,6 +387,121 @@ export default function AccountDashboard() {
 						</CardContent>
 					</Card>
 				</div>
+
+				{/* Favorited Materials Section */}
+				<Card>
+					<CardHeader>
+						<div className="flex items-center justify-between">
+							<div>
+								<CardTitle className="flex items-center gap-2">
+									<Heart className="h-5 w-5 text-red-500 fill-red-500" />
+									Favorite Materials
+								</CardTitle>
+								<CardDescription>
+									Materials you&apos;ve saved for later
+								</CardDescription>
+							</div>
+							{favoritedMaterials.length > 0 && (
+								<Badge variant="secondary">
+									{favoritedMaterials.length}{" "}
+									{favoritedMaterials.length === 1 ? "favorite" : "favorites"}
+								</Badge>
+							)}
+						</div>
+					</CardHeader>
+					<CardContent>
+						{favoritedMaterials.length === 0 ? (
+							<div className="text-center py-12">
+								<Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+								<p className="text-lg font-medium mb-2">No favorites yet</p>
+								<p className="text-sm text-muted-foreground mb-4">
+									Start exploring the library and save your favorite materials
+								</p>
+								<Button asChild variant="outline">
+									<Link href="/library">Browse Library</Link>
+								</Button>
+							</div>
+						) : (
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+								{favoritedMaterials.map((material) => {
+									const category = STEAM_CATEGORIES.find(
+										(cat) => cat.id === material.category
+									);
+
+									return (
+										<Link
+											key={material.id}
+											href={`/material/${material.id}`}
+											passHref
+										>
+											<Card className="group cursor-pointer border-border bg-card transition-all hover:border-primary h-full">
+												<div className="p-6 h-full flex flex-col">
+													<div className="mb-4 flex items-start justify-between">
+														<div
+															className="flex h-12 w-12 items-center justify-center rounded-lg"
+															style={{ backgroundColor: category?.color }}
+														>
+															{material.fileType
+																.toLowerCase()
+																.includes("pdf") ? (
+																<FileText className="h-6 w-6 text-white" />
+															) : (
+																<ImageIcon className="h-6 w-6 text-white" />
+															)}
+														</div>
+														<Badge variant="secondary" className="text-xs">
+															{category?.name}
+														</Badge>
+													</div>
+
+													<h3 className="mb-2 line-clamp-2 text-lg font-semibold">
+														{material.title}
+													</h3>
+													<p className="mb-4 line-clamp-3 text-sm text-muted-foreground leading-relaxed">
+														{material.description || "No description available"}
+													</p>
+
+													<div className="mb-4 flex flex-wrap gap-2">
+														{material.keywords
+															.slice(0, 3)
+															.map((item: string) => (
+																<Badge
+																	key={item}
+																	variant="outline"
+																	className="text-xs"
+																>
+																	{item}
+																</Badge>
+															))}
+													</div>
+
+													<div className="flex items-center justify-between border-t border-border mt-auto pt-4 text-xs text-muted-foreground">
+														<div className="flex items-center gap-1">
+															<User className="h-3 w-3" />
+															<span className="truncate max-w-[120px]">
+																{material.uploader.name}
+															</span>
+														</div>
+														<div className="flex items-center gap-3">
+															<div className="flex items-center gap-1">
+																<Download className="h-3 w-3" />
+																<span>{material.downloadCount}</span>
+															</div>
+															<div className="flex items-center gap-1">
+																<Eye className="h-3 w-3" />
+																<span>{material.viewCount}</span>
+															</div>
+														</div>
+													</div>
+												</div>
+											</Card>
+										</Link>
+									);
+								})}
+							</div>
+						)}
+					</CardContent>
+				</Card>
 			</div>
 		</div>
 	);

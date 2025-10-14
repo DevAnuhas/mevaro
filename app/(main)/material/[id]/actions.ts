@@ -118,3 +118,68 @@ export async function incrementDownloadCount(id: string, userId: string) {
         };
     }
 }
+
+export async function toggleFavorite(materialId: string, userId: string) {
+    try {
+        // Check if favorite already exists
+        const existingFavorite = await prisma.favorite.findUnique({
+            where: {
+                userId_materialId: {
+                    userId,
+                    materialId,
+                },
+            },
+        });
+
+        if (existingFavorite) {
+            // Remove favorite
+            await prisma.favorite.delete({
+                where: {
+                    id: existingFavorite.id,
+                },
+            });
+            return { success: true, isFavorited: false };
+        } else {
+            // Add favorite
+            await prisma.favorite.create({
+                data: {
+                    userId,
+                    materialId,
+                },
+            });
+            return { success: true, isFavorited: true };
+        }
+    } catch (error) {
+        console.error("Failed to toggle favorite:", error);
+        return {
+            success: false,
+            error: "Failed to toggle favorite",
+        };
+    }
+}
+
+export async function checkIfFavorited(materialId: string, userId?: string) {
+    try {
+        if (!userId) {
+            return { success: true, isFavorited: false };
+        }
+
+        const favorite = await prisma.favorite.findUnique({
+            where: {
+                userId_materialId: {
+                    userId,
+                    materialId,
+                },
+            },
+        });
+
+        return { success: true, isFavorited: !!favorite };
+    } catch (error) {
+        console.error("Failed to check favorite status:", error);
+        return {
+            success: false,
+            error: "Failed to check favorite status",
+            isFavorited: false,
+        };
+    }
+}
