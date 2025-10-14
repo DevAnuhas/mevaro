@@ -27,6 +27,7 @@ import {
 } from "../actions";
 import { toast } from "sonner";
 import type { Material, User } from "@prisma/client";
+import { MaterialViewer } from "@/app/(main)/material/[id]/components/material-viewer";
 
 type MaterialWithUploader = Material & {
 	uploader: Pick<User, "id" | "name" | "email">;
@@ -188,7 +189,7 @@ export function PendingApprovalsTable() {
 											</div>
 										</div>
 									</TableCell>
-									<TableCell className="text-sm text-muted-foreground">
+									<TableCell className="text-sm text-muted-foreground whitespace-nowrap">
 										{formatDate(material.createdAt)}
 									</TableCell>
 									<TableCell className="text-right">
@@ -301,6 +302,93 @@ export function PendingApprovalsTable() {
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 							)}
 							Reject Material
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* View Material Dialog */}
+			<Dialog
+				open={selectedMaterial !== null && actionDialog === null}
+				onOpenChange={(open) => !open && setSelectedMaterial(null)}
+			>
+				<DialogContent className="max-h-[90vh] overflow-y-auto max-w-5xl">
+					<DialogHeader>
+						<DialogTitle>{selectedMaterial?.title}</DialogTitle>
+						<DialogDescription>
+							{selectedMaterial?.description}
+						</DialogDescription>
+					</DialogHeader>
+					<div className="space-y-4">
+						{/* Material Details */}
+						<div className="grid grid-cols-2 gap-4 text-sm">
+							<div>
+								<span className="font-medium">Category:</span>{" "}
+								<Badge
+									className={
+										categoryColors[
+											selectedMaterial?.category as keyof typeof categoryColors
+										]
+									}
+								>
+									{selectedMaterial?.category}
+								</Badge>
+							</div>
+							<div>
+								<span className="font-medium">Uploader:</span>{" "}
+								{selectedMaterial?.uploader.name}
+							</div>
+							<div>
+								<span className="font-medium">Keywords:</span>
+								<div className="flex flex-wrap gap-1 mt-1">
+									{selectedMaterial?.keywords.map((keyword) => (
+										<Badge
+											key={keyword}
+											variant="secondary"
+											className="text-xs"
+										>
+											{keyword}
+										</Badge>
+									))}
+								</div>
+							</div>
+							<div>
+								<span className="font-medium">Submitted:</span>{" "}
+								{selectedMaterial && formatDate(selectedMaterial.createdAt)}
+							</div>
+						</div>
+
+						{/* Material Viewer */}
+						{selectedMaterial && (
+							<MaterialViewer
+								fileUrl={selectedMaterial.fileUrl}
+								fileType={selectedMaterial.fileType}
+								title={selectedMaterial.title}
+							/>
+						)}
+					</div>
+					<DialogFooter className="gap-2 mt-6">
+						<Button variant="outline" onClick={() => setSelectedMaterial(null)}>
+							Close
+						</Button>
+						<Button
+							variant="outline"
+							className="text-red-600 hover:text-red-700"
+							onClick={() => {
+								setActionDialog("reject");
+							}}
+						>
+							<X className="h-4 w-4 mr-2" />
+							Reject
+						</Button>
+						<Button
+							className="bg-green-600 hover:bg-green-700"
+							onClick={() => {
+								setActionDialog("approve");
+							}}
+						>
+							<Check className="h-4 w-4 mr-2" />
+							Approve
 						</Button>
 					</DialogFooter>
 				</DialogContent>
