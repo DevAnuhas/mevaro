@@ -320,12 +320,22 @@ npx prisma generate
 npx prisma db push
 ```
 
-6. **Start development server**
+6. **Seed the database with demo materials (optional)**
+```bash
+npm run db:seed
+```
+
+This will create:
+- A demo user account (demo@mevaro.edu)
+- 20 approved educational materials across all STEAM categories
+- Materials with demo file URLs ready for testing
+
+7. **Start development server**
 ```bash
 npm run dev
 ```
 
-7. **Access the application**
+8. **Access the application**
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Initial Admin Setup
@@ -517,11 +527,13 @@ mevaro/
 ### Available Scripts
 
 ```bash
-npm run dev          # Start development server with hot reload
-npm run build        # Build for production (includes Prisma generation)
-npm run start        # Start production server
-npm run lint         # Run ESLint for code quality
-npm run postinstall  # Automatically run after npm install (Prisma generation)
+npm run dev                    # Start development server with hot reload
+npm run build                  # Build for production (includes Prisma generation)
+npm run start                  # Start production server
+npm run lint                   # Run ESLint for code quality
+npm run postinstall            # Automatically run after npm install (Prisma generation)
+npm run db:seed                # Seed database with demo materials
+npm run db:generate-embeddings # Generate vector embeddings for materials
 ```
 
 ### Database Operations
@@ -531,8 +543,55 @@ npx prisma generate          # Generate Prisma Client
 npx prisma db push           # Push schema changes to database
 npx prisma migrate dev       # Create and apply migration
 npx prisma studio            # Open Prisma Studio GUI
-npx prisma db seed           # Run database seeding (if configured)
+npm run db:seed              # Seed database with 20 demo materials across STEAM categories
+npm run db:generate-embeddings # Generate vector embeddings for semantic search
 ```
+
+### Seeding the Database
+
+The project includes a comprehensive seed script that populates the database with 20 diverse educational materials across all STEAM categories:
+
+**What gets seeded:**
+- 1 demo user account (demo@mevaro.edu)
+- 20 educational materials (4 per STEAM category):
+  - **Science**: Photosynthesis, Chemical Bonding, Newton's Laws, Circulatory System
+  - **Technology**: Cloud Computing, Web Development, Cybersecurity, Database Design
+  - **Engineering**: Statics & Dynamics, Electrical Circuits, Sustainable Engineering, Robotics
+  - **Arts**: Art History, Digital Design, Music Theory, Creative Writing
+  - **Mathematics**: Calculus, Linear Algebra, Statistics, Discrete Mathematics
+
+**How to seed:**
+```bash
+npm run db:seed
+```
+
+All materials are created with `APPROVED` status and include:
+- Detailed descriptions and learning objectives
+- Relevant keywords for search optimization
+- Demo file URLs (for testing without actual file uploads)
+- Realistic file sizes and types
+- Pre-assigned categories
+
+**Note**: The seed script uses demo URLs for the `fileUrl` property. For production use, replace these with actual file uploads to your Cloudflare R2 bucket.
+
+### Generating Vector Embeddings
+
+After seeding or adding new materials, generate vector embeddings for semantic search:
+
+```bash
+npm run db:generate-embeddings
+```
+
+This script:
+- Processes all approved materials without embeddings
+- Generates 768-dimensional vectors using Google's `text-embedding-004` model
+- Stores embeddings in PostgreSQL using the pgvector extension
+- Enables semantic search functionality across all materials
+
+**Prerequisites:**
+- `GOOGLE_GENERATIVE_AI_API_KEY` must be set in your `.env` file
+- Materials must have `APPROVED` status
+- PostgreSQL must have the `pgvector` extension enabled
 
 ### Code Quality
 

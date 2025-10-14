@@ -1,60 +1,57 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
   extensions = [vector]
 }
 
 model User {
-  id            String    @id
+  id            String     @id @default(cuid())
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean    @default(false)
   image         String?
-  role          String
-  banned        Boolean?  @default(false)
-  banReason     String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
   banExpires    DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  sessions  Session[]
-  accounts  Account[]
-  materials Material[]
-  downloads Download[]
-  views     View[]
-  favorites Favorite[]
+  banReason     String?
+  banned        Boolean?   @default(false)
+  role          String
+  accounts      Account[]
+  downloads     Download[]
+  favorites     Favorite[]
+  materials     Material[]
+  sessions      Session[]
+  views         View[]
 
   @@map("user")
 }
 
 model Session {
-  id             String   @id
+  id             String   @id @default(cuid())
   expiresAt      DateTime
-  token          String
+  token          String   @unique
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   ipAddress      String?
   userAgent      String?
   userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   impersonatedBy String?
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@map("session")
 }
 
 model Account {
-  id                    String    @id
+  id                    String    @id @default(cuid())
   accountId             String
   providerId            String
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -64,12 +61,13 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("account")
 }
 
 model Verification {
-  id         String   @id
+  id         String   @id @default(cuid())
   identifier String
   value      String
   expiresAt  DateTime
@@ -80,27 +78,26 @@ model Verification {
 }
 
 model Material {
-  id            String         @id @default(cuid())
+  id            String                 @id @default(cuid())
   title         String
-  description   String?        @db.Text
+  description   String?
   fileUrl       String
   fileType      String
   fileSize      Int
   category      Category
   keywords      String[]
-  status        MaterialStatus @default(PENDING)
+  status        MaterialStatus         @default(PENDING)
   uploaderId    String
-  uploader      User           @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
-  viewCount     Int            @default(0)
-  downloadCount Int            @default(0)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  viewCount     Int                    @default(0)
+  downloadCount Int                    @default(0)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
   approvedAt    DateTime?
-  embedding     Unsupported("vector(768)")?
-
-  downloads Download[]
-  views     View[]
-  favorites Favorite[]
+  embedding     Unsupported("vector")?
+  downloads     Download[]
+  favorites     Favorite[]
+  uploader      User                   @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  views         View[]
 
   @@index([status])
   @@index([category])
@@ -111,10 +108,10 @@ model Material {
 model Download {
   id           String   @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   materialId   String
-  material     Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
   downloadedAt DateTime @default(now())
+  material     Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([materialId])
@@ -122,13 +119,13 @@ model Download {
 }
 
 model View {
-  id           String   @id @default(cuid())
-  userId       String?
-  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  materialId   String
-  material     Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  fingerprint  String?
-  viewedAt     DateTime @default(now())
+  id          String   @id @default(cuid())
+  userId      String?
+  materialId  String
+  fingerprint String?
+  viewedAt    DateTime @default(now())
+  material    Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([materialId])
@@ -140,10 +137,10 @@ model View {
 model Favorite {
   id         String   @id @default(cuid())
   userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   materialId String
-  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, materialId])
   @@index([userId])
