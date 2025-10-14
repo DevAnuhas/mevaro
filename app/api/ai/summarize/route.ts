@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
 
         // Stream the AI response with file input using multimodal content
         const result = streamText({
-            model: google('gemini-2.0-flash-exp'),
+            model: google('gemini-2.5-flash'),
             messages: [
                 {
                     role: 'user',

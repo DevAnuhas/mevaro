@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 
         // Stream the AI response
         const result = streamText({
-            model: google('gemini-2.0-flash-exp'),
+            model: google('gemini-2.5-flash'),
             system: systemPrompt,
             messages: convertToModelMessages(messages),
             temperature: 0.7,
