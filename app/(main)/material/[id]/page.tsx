@@ -160,7 +160,7 @@ export default async function MaterialPage({
 							) : (
 								<ImageIcon className="h-3 w-3" />
 							)}
-							{material.fileType.toUpperCase()}
+							{material.fileType.split("/").pop()?.toUpperCase()}
 						</Badge>
 					</div>
 				</div>

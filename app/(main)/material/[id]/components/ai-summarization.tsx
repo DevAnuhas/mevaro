@@ -12,8 +12,15 @@ import {
 	FileText,
 	RefreshCw,
 } from "lucide-react";
-import { estimateReadingTime } from "@/lib/ai-utils";
 import { useAIToolStorage } from "@/lib/hooks/use-local-storage";
+
+export function estimateReadingTime(
+	text: string,
+	wordsPerMinute: number = 200
+): number {
+	const words = text.trim().split(/\s+/).length;
+	return Math.ceil(words / wordsPerMinute);
+}
 
 export function AISummarization({ materialId }: { materialId: string }) {
 	// Cache summary in localStorage
@@ -131,4 +138,3 @@ export function AISummarization({ materialId }: { materialId: string }) {
 		</div>
 	);
 };
-

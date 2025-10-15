@@ -9,6 +9,7 @@
 		"lint": "next lint",
 		"postinstall": "prisma generate",
 		"db:migrate": "npx prisma migrate dev",
+		"db:deploy": "npx prisma migrate deploy",
 		"db:generate": "npx prisma generate",
 		"db:reset": "npx prisma migrate reset",
 		"db:seed": "tsx scripts/seed.ts",

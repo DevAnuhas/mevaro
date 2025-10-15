@@ -314,13 +314,14 @@ CREATE DATABASE mevaro;
 CREATE EXTENSION vector;
 ```
 
-5. **Run database migrations**
+5. **Push database schema to PostgreSQL**
 ```bash
-npx prisma generate
-npx prisma db push
+npm run db:deploy
 ```
 
-6. **Seed the database with demo materials (optional)**
+This applies the Prisma schema to your database.
+
+6. **Seed the database with demo materials**
 ```bash
 npm run db:seed
 ```
@@ -330,19 +331,26 @@ This will create:
 - 20 approved educational materials across all STEAM categories
 - Materials with demo file URLs ready for testing
 
-7. **Start development server**
+7. **Generate vector embeddings for semantic search**
+```bash
+npm run db:embed
+```
+
+This creates 768-dimensional embeddings for all seeded materials to enable AI-powered semantic search.
+
+8. **Start development server**
 ```bash
 npm run dev
 ```
 
-8. **Access the application**
+9. **Access the application**
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Initial Admin Setup
 
 After first user registration via Google OAuth, manually promote to admin:
 ```sql
-UPDATE "user" SET role = 'admin' WHERE email = 'your-email@example.com';
+UPDATE "user" SET role = 'admin' WHERE email = 'example@gmail.com';
 ```
 
 ## Project Structure
